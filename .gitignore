@@ -1,0 +1,31 @@
+# ===== 依赖 =====
+node_modules/
+
+# ===== 构建产物 =====
+dist/
+build/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ===== 环境变量与密钥（严禁提交） =====
+.env
+.env.local
+.env.*.local
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== 微信开发者工具本地私有配置 =====
+front/project.private.config.json
