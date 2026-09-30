@@ -15,5 +15,6 @@ def build_report_chain():
     """
     settings = get_settings()
     llm = create_chat_model(temperature=settings.report_temperature)
-    structured_llm = llm.with_structured_output(ReportLlmOutput)
+    # DeepSeek 不支持 response_format: json_schema（OpenAI 默认模式），改用 function calling
+    structured_llm = llm.with_structured_output(ReportLlmOutput, method="function_calling")
     return build_report_prompt() | structured_llm

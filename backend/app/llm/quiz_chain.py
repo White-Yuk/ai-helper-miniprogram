@@ -15,5 +15,6 @@ def build_quiz_chain():
     """
     settings = get_settings()
     llm = create_chat_model(temperature=settings.quiz_temperature)
-    structured_llm = llm.with_structured_output(QuizData)
+    # DeepSeek 不支持 response_format: json_schema（OpenAI 默认模式），改用 function calling
+    structured_llm = llm.with_structured_output(QuizData, method="function_calling")
     return build_quiz_prompt() | structured_llm
