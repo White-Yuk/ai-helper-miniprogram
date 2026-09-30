@@ -1,0 +1,53 @@
+.speech-bubble {
+  position: relative;
+  box-sizing: border-box;
+  border: $border-ink;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: 12px 15px;
+  font-size: $fs-md;
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: pre-line;
+
+  &--yellow {
+    background-color: $yellow;
+  }
+
+  &--white {
+    background-color: $paper-2;
+  }
+
+  &--tail {
+    margin-bottom: 6px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 26px;
+      bottom: -15px;
+      width: 0;
+      height: 0;
+      border-left: 9px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 17px solid $ink;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 30px;
+      bottom: -9px;
+      z-index: 1;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 11px solid transparent;
+      border-top: 12px solid $yellow;
+    }
+  }
+
+  &--white.speech-bubble--tail::before {
+    border-top-color: $paper-2;
+  }
+}

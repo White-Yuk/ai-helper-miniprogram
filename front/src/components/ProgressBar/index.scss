@@ -1,0 +1,41 @@
+.progress-bar {
+  box-sizing: border-box;
+  width: 100%;
+  border: $border-ink-thin;
+  border-radius: $radius-round;
+  background-color: $white;
+  box-shadow: 2.5px 2.5px 0 $ink;
+  padding: 2px;
+
+  &__fill {
+    box-sizing: border-box;
+    height: 100%;
+    border: 2px solid $ink;
+    border-radius: $radius-round;
+    background-color: $yellow;
+    background-image: linear-gradient(
+      45deg,
+      rgba(31, 31, 31, 0.14) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(31, 31, 31, 0.14) 50%,
+      rgba(31, 31, 31, 0.14) 75%,
+      transparent 75%
+    );
+    background-size: 13px 13px;
+    transition: width 0.4s ease;
+  }
+
+  &--red &__fill {
+    background-color: $red;
+    background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.18) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.18) 50%,
+      rgba(255, 255, 255, 0.18) 75%,
+      transparent 75%
+    );
+  }
+}

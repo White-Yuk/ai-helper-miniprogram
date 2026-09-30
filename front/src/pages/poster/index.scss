@@ -1,0 +1,195 @@
+/* 海报页整体使用墨色底衬 + 大红海报（覆盖 PageShell 默认底色） */
+.poster-page {
+  box-sizing: border-box;
+  padding: 0 14px 20px;
+  min-height: 100vh;
+  background-color: $ink !important;
+}
+
+.poster-top {
+  display: flex;
+  align-items: center;
+  margin: 8px 0 14px;
+
+  &__hint {
+    margin-left: 12px;
+    font-size: $fs-sm;
+    font-weight: 700;
+    color: $yellow;
+  }
+}
+
+.poster {
+  position: relative;
+  box-sizing: border-box;
+  border: $border-ink;
+  border-radius: 20px;
+  background-color: $red;
+  @include dot-grid(rgba(255, 255, 255, 0.22), 11px, 1.7px);
+  box-shadow: $shadow;
+  padding: 16px 14px 14px;
+  overflow: hidden;
+
+  &__sfx {
+    position: absolute;
+    left: 10px;
+    top: 108px;
+    font-style: italic;
+    font-size: 22px;
+    font-weight: 900;
+    color: $white;
+    transform: rotate(-8deg);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 $ink, -2px -2px 0 $ink, 2px -2px 0 $ink, -2px 2px 0 $ink;
+  }
+
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    background-color: $white;
+    border: 2.5px solid $ink;
+    border-radius: $radius-round;
+    padding: 4px 13px 5px;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 3px 3px 0 $ink;
+    transform: rotate(-1.5deg);
+    margin-bottom: 44px;
+  }
+
+  &__mascot {
+    position: absolute;
+    right: 2px;
+    top: 42px;
+  }
+
+  &__title {
+    display: block;
+    text-align: center;
+    font-size: 29px;
+    font-weight: 900;
+    color: $yellow;
+    line-height: 1.3;
+    letter-spacing: 2px;
+    text-shadow: 3.5px 3.5px 0 $ink, -2px -2px 0 $ink, 2px -2px 0 $ink, -2px 2px 0 $ink;
+    margin-bottom: 30px;
+  }
+
+  &__quote {
+    box-sizing: border-box;
+    background-color: $white;
+    border: $border-ink;
+    border-radius: $radius-xl;
+    box-shadow: 6px 6px 0 rgba(31, 31, 31, 0.9);
+    padding: 18px 16px;
+    text-align: center;
+    margin-bottom: 20px;
+
+    &-mark {
+      display: block;
+      font-size: 28px;
+      font-weight: 900;
+      color: $red;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    &-text {
+      font-size: $fs-lg;
+      font-weight: 900;
+      line-height: 1.6;
+    }
+  }
+
+  &__stats {
+    display: flex;
+    margin-bottom: 20px;
+  }
+
+  &__stat {
+    flex: 1;
+    box-sizing: border-box;
+    border: $border-ink;
+    border-radius: $radius;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 4px 4px 0 rgba(31, 31, 31, 0.9);
+    padding: 10px 4px 9px;
+    text-align: center;
+    margin-right: 9px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  &__stat-value {
+    display: block;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.3;
+
+    &--red {
+      color: $red;
+    }
+  }
+
+  &__stat-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 900;
+    color: $muted;
+    margin-top: 2px;
+  }
+
+  &__foot {
+    box-sizing: border-box;
+    background-color: $white;
+    border: $border-ink;
+    border-radius: $radius-lg;
+    box-shadow: 5px 5px 0 rgba(31, 31, 31, 0.9);
+    padding: 11px 13px;
+    display: flex;
+    align-items: center;
+  }
+
+  &__qr {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  &__foot-text {
+    flex: 1;
+  }
+
+  &__foot-t1 {
+    display: block;
+    font-size: $fs-sm;
+    font-weight: 900;
+  }
+
+  &__foot-t2 {
+    display: block;
+    font-size: $fs-xs;
+    color: $muted;
+    margin-top: 2px;
+  }
+
+  &__topic {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-size: $fs-xs;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.92);
+  }
+}
+
+.poster-actions {
+  margin-top: 18px;
+
+  &__gap {
+    margin-top: 11px;
+  }
+}

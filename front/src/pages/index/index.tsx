@@ -1,0 +1,211 @@
+import { useState } from 'react'
+import { View, Text, Textarea } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+
+import PageShell from '../../components/PageShell'
+import Mascot from '../../components/Mascot'
+import InkButton from '../../components/InkButton'
+import type { QuestionType, QuizDifficulty } from '../../types'
+
+import './index.scss'
+
+const EXAMPLE_TOPICS = ['Python 入门', '量子力学', '法国大革命', '剪辑技巧']
+
+const TYPE_OPTIONS: { key: QuestionType; label: string }[] = [
+  { key: 'single', label: '单选' },
+  { key: 'multiple', label: '多选' },
+  { key: 'judge', label: '判断' },
+  { key: 'fill', label: '填空' },
+]
+
+const COUNT_OPTIONS = [3, 5, 10]
+
+const DIFFICULTY_OPTIONS: { key: QuizDifficulty; label: string }[] = [
+  { key: 'easy', label: '简单' },
+  { key: 'mixed', label: '混合' },
+  { key: 'hard', label: '困难' },
+]
+
+export default function Index() {
+  const [userInput, setUserInput] = useState('')
+  const [sheetVisible, setSheetVisible] = useState(false)
+  const [types, setTypes] = useState<QuestionType[]>(['single', 'multiple', 'judge'])
+  const [count, setCount] = useState(5)
+  const [difficulty, setDifficulty] = useState<QuizDifficulty>('mixed')
+
+  const openConfig = () => {
+    if (!userInput.trim()) {
+      Taro.showToast({ title: '先输入一个知识点吧', icon: 'none' })
+      return
+    }
+    setSheetVisible(true)
+  }
+
+  const toggleType = (key: QuestionType) => {
+    setTypes((prev) => {
+      if (prev.includes(key)) {
+        if (prev.length === 1) {
+          Taro.showToast({ title: '至少要留一种题型', icon: 'none' })
+          return prev
+        }
+        return prev.filter((item) => item !== key)
+      }
+      return [...prev, key]
+    })
+  }
+
+  const startGenerate = () => {
+    const payload = {
+      user_input: userInput.trim(),
+      question_count: count,
+      difficulty,
+      question_types: types,
+    }
+    Taro.setStorageSync('pending_quiz_request', payload)
+    setSheetVisible(false)
+    Taro.navigateTo({ url: '/pages/generating/index' })
+  }
+
+  const handleAvatar = () => {
+    Taro.showToast({ title: '用户中心即将上线', icon: 'none' })
+  }
+
+  return (
+    <PageShell className='index-page'>
+      {/* 顶栏（右侧避开微信胶囊按钮区域） */}
+      <View className='home-top'>
+        <View className='logo-sticker'>
+          <Text className='logo-sticker__ai'>AI</Text>
+          <Text className='logo-sticker__text'>闯关学习</Text>
+        </View>
+        <View className='avatar-dot' hoverClass='avatar-dot--active' onClick={handleAvatar}>
+          <Text>我</Text>
+        </View>
+      </View>
+
+      {/* 主视觉卡 */}
+      <View className='hero-card'>
+        <View className='hero-card__speech'>
+          <Text>嘿！今天想把什么{'\n'}变成你的关卡？</Text>
+        </View>
+        <Text className='hero-card__sfx'>SHUA!</Text>
+        <Mascot className='hero-card__mascot' size={118} />
+      </View>
+
+      {/* 输入卡 */}
+      <View className='input-card'>
+        <Textarea
+          className='input-card__textarea'
+          value={userInput}
+          onInput={(event) => setUserInput(event.detail.value)}
+          placeholder='输入一个知识点，比如：什么是 RAG？'
+          placeholderClass='input-card__placeholder'
+          maxlength={2000}
+          autoHeight
+          showConfirmBar={false}
+        />
+        <View className='input-card__hint'>
+          <View className='input-card__hint-tag'>提示</View>
+          <Text>一句话 / 一段文字 / 一个主题都可以</Text>
+        </View>
+      </View>
+
+      {/* 主按钮 */}
+      <InkButton type='primary' size='large' className='start-btn' onClick={openConfig}>
+        ⚡ 开始生成闯关！
+      </InkButton>
+
+      {/* 示例主题 */}
+      <View className='sec-flag'>试试这些 👇</View>
+      <View className='chips'>
+        {EXAMPLE_TOPICS.map((topic) => (
+          <View
+            key={topic}
+            className='chip'
+            hoverClass='chip--active'
+            onClick={() => setUserInput(topic)}
+          >
+            <Text>{topic}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* 配置弹层 */}
+      {sheetVisible && (
+        <View className='config-mask' onClick={() => setSheetVisible(false)}>
+          <View className='config-sheet' onClick={(event) => event.stopPropagation()}>
+            <View className='config-sheet__handle' />
+            <View className='config-sheet__title'>
+              <Text>配置你的关卡</Text>
+            </View>
+            <View className='config-sheet__sub'>
+              <Text>题型自由搭配，AI 按需出题</Text>
+            </View>
+
+            <View className='sheet-label'>
+              <View className='sheet-label__dot' />
+              <Text>搭配题型</Text>
+            </View>
+            <View className='type-grid'>
+              {TYPE_OPTIONS.map(({ key, label }) => {
+                const active = types.includes(key)
+                return (
+                  <View
+                    key={key}
+                    className={`type-chip ${active ? 'type-chip--on' : ''}`}
+                    hoverClass='none'
+                    onClick={() => toggleType(key)}
+                  >
+                    <View className='type-chip__box'>
+                      <Text>{active ? '✓' : ''}</Text>
+                    </View>
+                    <Text className='type-chip__label'>{label}</Text>
+                  </View>
+                )
+              })}
+            </View>
+
+            <View className='sheet-label'>
+              <View className='sheet-label__dot' />
+              <Text>来几道？</Text>
+            </View>
+            <View className='seg'>
+              {COUNT_OPTIONS.map((num) => (
+                <View
+                  key={num}
+                  className={`seg__item ${count === num ? 'seg__item--on' : ''}`}
+                  onClick={() => setCount(num)}
+                >
+                  <Text>{num} 题</Text>
+                </View>
+              ))}
+            </View>
+
+            <View className='sheet-label'>
+              <View className='sheet-label__dot' />
+              <Text>难度口味</Text>
+            </View>
+            <View className='seg'>
+              {DIFFICULTY_OPTIONS.map(({ key, label }) => (
+                <View
+                  key={key}
+                  className={`seg__item ${difficulty === key ? 'seg__item--on' : ''}`}
+                  onClick={() => setDifficulty(key)}
+                >
+                  <Text>{label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <InkButton type='primary' size='large' className='config-sheet__cta' onClick={startGenerate}>
+              ⚡ 开始生成！
+            </InkButton>
+            <View className='config-sheet__tip'>
+              <Text>已选 {types.length} 种题型 · 填空检验记忆，选择考验理解</Text>
+            </View>
+          </View>
+        </View>
+      )}
+    </PageShell>
+  )
+}

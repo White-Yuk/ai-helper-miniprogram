@@ -1,0 +1,24 @@
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border: $border-ink-thin;
+  border-radius: 12px;
+  background-color: $white;
+  box-shadow: 3px 3px 0 $ink;
+  flex-shrink: 0;
+
+  &--active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 $ink;
+  }
+
+  &__arrow {
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1;
+  }
+}

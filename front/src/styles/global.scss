@@ -1,0 +1,14 @@
+// 全局基础样式
+page {
+  background-color: $paper;
+  color: $ink;
+  font-family: $font-family;
+  font-size: $fs-base;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+// 通用行内文本
+text {
+  font-family: $font-family;
+}

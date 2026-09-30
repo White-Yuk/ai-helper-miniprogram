@@ -1,0 +1,10 @@
+.mascot {
+  display: block;
+  flex-shrink: 0;
+
+  &__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}

@@ -1,0 +1,52 @@
+.ink-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: $border-ink;
+  border-radius: $radius;
+  box-shadow: $shadow-sm;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-align: center;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+
+  &--normal {
+    padding: 12px 22px;
+    font-size: $fs-base;
+  }
+
+  &--large {
+    width: 100%;
+    padding: 14px 0;
+    font-size: $fs-lg;
+    border-radius: $radius-lg;
+  }
+
+  &--primary {
+    background-color: $red;
+    color: $white;
+  }
+
+  &--secondary {
+    background-color: $yellow;
+    color: $ink;
+  }
+
+  &--ghost {
+    background-color: $paper-2;
+    color: $ink;
+  }
+
+  &--active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 $ink;
+  }
+
+  &--disabled {
+    background-color: $disabled-bg;
+    color: $disabled-fg;
+    border-color: $disabled-fg;
+    box-shadow: 4px 4px 0 $disabled-fg;
+  }
+}

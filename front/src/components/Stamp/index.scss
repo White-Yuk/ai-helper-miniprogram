@@ -1,0 +1,37 @@
+.stamp {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 4px solid currentColor;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+
+  &--ok {
+    color: $green-deep;
+  }
+
+  &--no {
+    color: $red-deep;
+  }
+
+  &__inner {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 2px dashed currentColor;
+    border-radius: 50%;
+    opacity: 0.55;
+  }
+
+  &__mark {
+    position: relative;
+    z-index: 1;
+    font-weight: 900;
+    line-height: 1;
+  }
+}
