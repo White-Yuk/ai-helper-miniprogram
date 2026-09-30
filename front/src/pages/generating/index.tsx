@@ -15,13 +15,23 @@ import './index.scss'
 
 type Stage = 'loading' | 'error'
 
-const STEPS = ['搜集资料 · 锁定核心知识', '划重点 · 圈出关键概念', '出题中 · 按你的题型搭配生成…']
+const DEFAULT_STEPS = ['搜集资料 · 锁定核心知识', '划重点 · 圈出关键概念', '出题中 · 按你的题型搭配生成…']
+
+const buildSteps = (topic: string, count: number) => {
+  const shown = topic.length > 12 ? `${topic.slice(0, 12)}…` : topic
+  return [
+    `搜集资料 · 锁定「${shown}」`,
+    `划重点 · 圈出 ${count} 个核心知识`,
+    '出题中 · 按你的题型搭配生成…',
+  ]
+}
 
 export default function Generating() {
   const [stage, setStage] = useState<Stage>('loading')
   const [errorMsg, setErrorMsg] = useState('')
   const [errorCode, setErrorCode] = useState('')
   const [stepIndex, setStepIndex] = useState(0)
+  const [steps, setSteps] = useState(DEFAULT_STEPS)
   const startedRef = useRef(false)
 
   const run = async () => {
@@ -33,6 +43,7 @@ export default function Generating() {
       Taro.redirectTo({ url: '/pages/index/index' })
       return
     }
+    setSteps(buildSteps(request.user_input, request.question_count))
 
     try {
       const data = await generateQuiz(request)
@@ -56,7 +67,7 @@ export default function Generating() {
 
     run()
     const timer = setInterval(() => {
-      setStepIndex((index) => (index >= STEPS.length - 1 ? index : index + 1))
+      setStepIndex((index) => (index >= steps.length - 1 ? index : index + 1))
     }, 1800)
     return () => clearInterval(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,7 +89,7 @@ export default function Generating() {
           <SpeechBubble className='loading-stage__bubble'>侦探模式 ON！{'\n'}正在替你翻遍全网找线索…</SpeechBubble>
 
           <View className='steps'>
-            {STEPS.map((label, index) => (
+            {steps.map((label, index) => (
               <View key={label} className={`step ${index === stepIndex ? 'step--doing' : ''}`}>
                 <View className='step__icon'>{index < stepIndex ? '✓' : index === stepIndex ? '⟳' : ''}</View>
                 <Text className='step__label'>{label}</Text>
