@@ -8,7 +8,6 @@ import ProgressBar from '../../components/ProgressBar'
 import Badge from '../../components/Badge'
 import Stamp from '../../components/Stamp'
 import SpeechBubble from '../../components/SpeechBubble'
-import BoomSticker from '../../components/BoomSticker'
 import InkButton from '../../components/InkButton'
 import { gradeAnswer } from '../../utils/grader'
 import { useQuizStore } from '../../store/quizStore'
@@ -35,10 +34,8 @@ export default function Quiz() {
   const [selected, setSelected] = useState<string[]>([])
   const [fillInputs, setFillInputs] = useState<string[]>([])
   const [lastCorrect, setLastCorrect] = useState(false)
-  const [showCombo, setShowCombo] = useState(false)
 
   const questionStartRef = useRef(Date.now())
-  const combosShownRef = useRef<Set<number>>(new Set())
 
   // 没有题库（例如直接进入本页）→ 回首页
   useEffect(() => {
@@ -84,12 +81,6 @@ export default function Quiz() {
     setSelected(answers)
     setLastCorrect(correct)
     setPhase('feedback')
-
-    const nextCombo = correct ? combo + 1 : 0
-    if (correct && nextCombo >= 3 && nextCombo % 3 === 0 && !combosShownRef.current.has(nextCombo)) {
-      combosShownRef.current.add(nextCombo)
-      setShowCombo(true)
-    }
   }
 
   const nextQuestion = () => {
@@ -326,31 +317,6 @@ export default function Quiz() {
           <InkButton type='secondary' size='large' onClick={nextQuestion}>
             {current + 1 >= total ? '查看复盘报告 →' : lastCorrect ? '太棒了，下一题 →' : '我懂了，下一题 →'}
           </InkButton>
-        </View>
-      )}
-
-      {/* COMBO 弹层 */}
-      {showCombo && (
-        <View className='combo-mask'>
-          <View className='combo-panel'>
-            <BoomSticker size={220} color='yellow'>
-              <Text className='combo-panel__title'>
-                COMBO{'\n'}×{combo}！
-              </Text>
-            </BoomSticker>
-            <View className='combo-panel__stickers'>
-              <View className='combo-panel__chip'>
-                <Text>⚡ 经验 +{XP_CORRECT}</Text>
-              </View>
-              <View className='combo-panel__chip combo-panel__chip--alt'>
-                <Text>🪙 金币 +20</Text>
-              </View>
-            </View>
-            <InkButton type='primary' className='combo-panel__btn' onClick={() => setShowCombo(false)}>
-              手感来了，继续冲！→
-            </InkButton>
-            <Text className='combo-panel__hint'>连续答对 {combo} 题 · 别断啊朋友 🔥</Text>
-          </View>
         </View>
       )}
     </PageShell>
