@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 闯关学习 · 漫画风设计方向确认稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --red: #E8432E;
+    --red-deep: #C33722;
+    --yellow: #FFC93C;
+    --yellow-soft: #FFE9AE;
+    --paper: #FFF6E3;
+    --paper-2: #FFFDF6;
+    --ink: #1F1F1F;
+    --green: #3FA34D;
+    --green-deep: #2E7D3A;
+    --blue: #4A9BFF;
+    --orange: #FF8A3D;
+    --muted: #6B6459;
+    --font-title: "ZCOOL KuaiLe", "ZCOOL QingKe HuangYou", "Yuanti SC", "Microsoft YaHei", sans-serif;
+    --font-strong: "ZCOOL QingKe HuangYou", "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif;
+    --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-comic: "Bangers", "ZCOOL KuaiLe", cursive;
+    --font-num: "Fredoka", "Arial Rounded MT Bold", "Noto Sans SC", sans-serif;
+    --line: 3px solid var(--ink);
+    --line-thin: 2.5px solid var(--ink);
+    --shadow-hard: 6px 6px 0 var(--ink);
+    --shadow-hard-sm: 4px 4px 0 var(--ink);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image: radial-gradient(circle, rgba(31, 31, 31, 0.075) 1.2px, transparent 1.3px);
+    background-size: 13px 13px;
+    line-height: 1.65;
+    padding: 26px 20px 80px;
+  }
+
+  .wrap { max-width: 1420px; margin: 0 auto; }
+
+  /* ================= 顶部横幅 ================= */
+  .banner {
+    border: var(--line);
+    background: var(--yellow);
+    box-shadow: var(--shadow-hard);
+    border-radius: 18px;
+    padding: 16px 22px;
+    font-weight: 900;
+    font-size: 15px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 34px;
+    transform: rotate(-0.3deg);
+  }
+  .banner .pin {
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  /* ================= 页头 ================= */
+  .page-head { text-align: center; margin-bottom: 44px; position: relative; }
+  .page-head .kicker {
+    display: inline-block;
+    font-family: var(--font-comic);
+    letter-spacing: 2px;
+    font-size: 15px;
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 3px 16px 5px;
+    border-radius: 999px;
+    transform: rotate(-1.5deg);
+    margin-bottom: 14px;
+  }
+  .page-head h1 {
+    font-family: var(--font-title);
+    font-size: clamp(30px, 5vw, 52px);
+    line-height: 1.18;
+    letter-spacing: 1px;
+  }
+  .page-head h1 .hl {
+    color: var(--red);
+    -webkit-text-stroke: 1.2px var(--ink);
+    text-shadow: 3px 3px 0 var(--yellow);
+  }
+  .page-head .sub {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .page-head .sub b { color: var(--red); }
+
+  /* ================= 区块通用 ================= */
+  section { margin-bottom: 52px; }
+  .sec-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .sec-title .no {
+    font-family: var(--font-comic);
+    font-size: 22px;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: var(--red);
+    color: #fff;
+    border: var(--line);
+    border-radius: 50%;
+    box-shadow: 3px 3px 0 var(--ink);
+    flex-shrink: 0;
+    padding-top: 3px;
+  }
+  .sec-title h2 {
+    font-family: var(--font-title);
+    font-size: clamp(21px, 2.6vw, 27px);
+    letter-spacing: 0.5px;
+    background: linear-gradient(transparent 58%, var(--yellow) 58%, var(--yellow) 94%, transparent 94%);
+    padding: 0 6px;
+  }
+  .sec-title .note {
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: auto;
+    font-weight: 500;
+  }
+
+  /* ================= 卡片基础 ================= */
+  .card {
+    background: var(--paper-2);
+    border: var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow-hard-sm);
+  }
+
+  /* ================= 1. 调研速览 ================= */
+  .research-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .research-card {
+    padding: 16px 16px 15px;
+    position: relative;
+    background: var(--paper-2);
+    border: var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-hard-sm);
+  }
+  .research-card:nth-child(odd) { transform: rotate(-0.4deg); }
+  .research-card:nth-child(even) { transform: rotate(0.4deg); }
+  .research-card .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--yellow);
+    border-radius: 6px;
+    padding: 2px 9px 3px;
+    margin-bottom: 10px;
+  }
+  .research-card h3 { font-size: 15.5px; font-weight: 900; margin-bottom: 7px; }
+  .research-card p { font-size: 13px; color: var(--muted); line-height: 1.72; }
+  .research-card p b { color: var(--ink); }
+
+  /* ================= 2. 三格漫画 ================= */
+  .comic-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 4px solid var(--ink);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow-hard);
+    background: var(--ink);
+  }
+  .comic-cell {
+    background: var(--paper-2);
+    padding: 22px 20px 20px;
+    position: relative;
+    border-right: 4px solid var(--ink);
+  }
+  .comic-cell:last-child { border-right: none; }
+  .comic-cell .frame-no {
+    position: absolute;
+    top: 10px; left: 12px;
+    font-family: var(--font-comic);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .comic-cell .art {
+    height: 118px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 12px;
+  }
+  .comic-cell h3 { font-family: var(--font-title); font-size: 18px; margin-bottom: 6px; }
+  .comic-cell p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .comic-cell p b { color: var(--red); }
+
+  .bubble-mini {
+    position: relative;
+    background: var(--yellow);
+    border: var(--line-thin);
+    border-radius: 14px;
+    padding: 7px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.5;
+    max-width: 200px;
+  }
+  .bubble-mini::after {
+    content: "";
+    position: absolute;
+    left: 22px; bottom: -13px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 14px solid var(--ink);
+  }
+  .bubble-mini::before {
+    content: "";
+    position: absolute;
+    left: 25px; bottom: -8px;
+    z-index: 1;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--yellow);
+  }
+
+  /* ================= 3. 设计映射表 ================= */
+  .map-table {
+    border: var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-hard-sm);
+    background: var(--paper-2);
+  }
+  .map-row {
+    display: grid;
+    grid-template-columns: 1.1fr 2fr;
+    border-bottom: 2.5px solid var(--ink);
+  }
+  .map-row:last-child { border-bottom: none; }
+  .map-row > div { padding: 12px 18px; font-size: 13.5px; }
+  .map-row .from {
+    background: var(--yellow-soft);
+    border-right: 2.5px solid var(--ink);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .map-row .to { color: var(--ink); background: var(--paper-2); }
+  .map-row .to b { color: var(--red); }
+  .map-row .emoji { font-size: 18px; }
+
+  /* ================= 4. 色彩 ================= */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+  }
+  .swatch {
+    border: var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow-hard-sm);
+    background: #fff;
+  }
+  .swatch .chip-color { height: 84px; border-bottom: var(--line); position: relative; }
+  .swatch .chip-color .dots-ov {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.35) 1.4px, transparent 1.5px);
+    background-size: 9px 9px;
+  }
+  .swatch .meta { padding: 9px 11px 11px; }
+  .swatch .meta .name { font-weight: 900; font-size: 13.5px; }
+  .swatch .meta .hex { font-family: var(--font-num); font-size: 12px; color: var(--muted); letter-spacing: 0.5px; }
+  .swatch .meta .use { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  /* ================= 5. 字体 ================= */
+  .font-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .font-card { padding: 18px; }
+  .font-card .label {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .font-card .label span:last-child { font-family: var(--font-num); }
+  .demo-title { font-family: var(--font-title); font-size: 30px; line-height: 1.3; }
+  .demo-comic { font-family: var(--font-comic); font-size: 34px; letter-spacing: 1.5px; color: var(--red); }
+  .demo-body { font-size: 14.5px; color: #3a3a3a; line-height: 1.8; }
+  .demo-num { font-family: var(--font-num); font-size: 32px; font-weight: 700; }
+
+  /* ================= 6. 组件画廊 ================= */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .g-card { padding: 18px 16px; }
+  .g-card h4 {
+    font-size: 13px; font-weight: 900; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .g-card h4::after { content: ""; flex: 1; height: 2.5px; background: var(--ink); opacity: 0.85; border-radius: 2px; }
+  .g-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+  /* 按钮 */
+  .btn {
+    font-family: var(--font-strong);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: var(--line);
+    border-radius: 13px;
+    box-shadow: var(--shadow-hard-sm);
+    cursor: pointer;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    user-select: none;
+  }
+  .btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-primary { background: var(--red); color: #fff; padding: 13px 24px; font-size: 16.5px; }
+  .btn-secondary { background: var(--yellow); color: var(--ink); padding: 12px 22px; font-size: 15.5px; }
+  .btn-ghost { background: var(--paper-2); color: var(--ink); padding: 12px 22px; font-size: 15.5px; }
+
+  /* 选项卡（四态） */
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: var(--line-thin);
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 13px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 3px 3px 0 rgba(31,31,31,0.85);
+    width: 100%;
+    margin-bottom: 9px;
+  }
+  .opt .key {
+    font-family: var(--font-num);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2.5px solid var(--ink);
+    display: grid; place-items: center;
+    font-size: 12.5px; font-weight: 700;
+    flex-shrink: 0;
+    background: #fff;
+  }
+  .opt.selected { background: var(--yellow); }
+  .opt.correct { background: #D8F0DC; border-color: var(--green-deep); }
+  .opt.correct .key { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .opt.wrong { background: #FADBD5; border-color: var(--red-deep); }
+  .opt.wrong .key { background: var(--red); color: #fff; border-color: var(--red-deep); }
+  .opt .badge-mini { margin-left: auto; font-size: 15px; }
+
+  /* 对话气泡 */
+  .bubble {
+    position: relative;
+    background: var(--yellow);
+    border: var(--line);
+    border-radius: 16px;
+    padding: 13px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.7;
+    box-shadow: var(--shadow-hard-sm);
+  }
+  .bubble.tail::after {
+    content: "";
+    position: absolute;
+    left: 30px; bottom: -16px;
+    width: 0; height: 0;
+    border-left: 9px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 17px solid var(--ink);
+  }
+  .bubble.tail::before {
+    content: "";
+    position: absolute;
+    left: 34px; bottom: -10px; z-index: 1;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 12px solid var(--yellow);
+  }
+  .bubble.white { background: var(--paper-2); }
+  .bubble.white.tail::before { border-top-color: var(--paper-2); }
+
+  /* 爆炸贴纸 */
+  .boom-wrap { position: relative; display: inline-grid; place-items: center; }
+  .boom-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .boom-wrap .boom-text {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-title);
+    font-weight: 900;
+    font-size: 15px;
+    line-height: 1.1;
+    text-align: center;
+    padding: 14px 10px;
+  }
+  .boom-wrap.sm { width: 108px; height: 84px; }
+
+  /* 批改章 */
+  .stamp {
+    width: 78px; height: 78px;
+    border: 4px solid currentColor;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-title);
+    font-size: 30px;
+    font-weight: 900;
+    position: relative;
+    transform: rotate(-12deg);
+    background: rgba(255,255,255,0.55);
+  }
+  .stamp::after {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 2px dashed currentColor;
+    border-radius: 50%;
+    opacity: 0.55;
+  }
+  .stamp.ok { color: var(--green-deep); }
+  .stamp.no { color: var(--red-deep); }
+
+  /* 徽章 */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: var(--line-thin);
+    border-radius: 999px;
+    padding: 5px 13px 6px;
+    font-weight: 900;
+    font-size: 13px;
+    box-shadow: 2.5px 2.5px 0 var(--ink);
+    background: #fff;
+  }
+  .badge.xp { background: var(--yellow); font-family: var(--font-num); padding-top: 3px; }
+  .badge.star { background: var(--paper-2); }
+  .badge.combo { background: var(--red); color: #fff; }
+  .badge .ic { font-size: 15px; }
+
+  /* 进度条 */
+  .prog-demo { width: 100%; }
+  .prog-track {
+    height: 22px;
+    border: var(--line-thin);
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 2.5px 2.5px 0 var(--ink);
+    padding: 2.5px;
+    position: relative;
+  }
+  .prog-fill {
+    height: 100%;
+    width: 60%;
+    background: var(--yellow);
+    border-radius: 999px;
+    border: 2px solid var(--ink);
+    background-image: linear-gradient(45deg, rgba(31,31,31,0.14) 25%, transparent 25%, transparent 50%, rgba(31,31,31,0.14) 50%, rgba(31,31,31,0.14) 75%, transparent 75%);
+    background-size: 14px 14px;
+  }
+
+  /* 装饰素材 */
+  .deco-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .deco-dot {
+    width: 70px; height: 56px;
+    border: var(--line-thin);
+    border-radius: 10px;
+    background-color: var(--yellow);
+    background-image: radial-gradient(circle, rgba(31,31,31,0.35) 1.5px, transparent 1.6px);
+    background-size: 8px 8px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .deco-speed {
+    width: 86px; height: 56px;
+    border: var(--line-thin);
+    border-radius: 10px;
+    background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 9px);
+    background-size: 9px 100%;
+    background-clip: content-box;
+    padding: 10px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .deco-tape {
+    width: 92px; height: 30px;
+    background: rgba(255, 201, 60, 0.85);
+    border: 2px solid rgba(31,31,31,0.7);
+    transform: rotate(-4deg);
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 900; color: rgba(31,31,31,0.75);
+    box-shadow: 2px 2px 0 rgba(31,31,31,0.4);
+  }
+  .deco-bone {
+    border: var(--line-thin);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #fff;
+    box-shadow: 3px 3px 0 var(--ink);
+    display: grid; place-items: center;
+  }
+  .deco-sfx {
+    font-family: var(--font-comic);
+    font-size: 25px;
+    color: var(--red);
+    text-shadow: 2px 2px 0 var(--yellow), 3.5px 3.5px 0 var(--ink);
+    transform: rotate(-4deg);
+    letter-spacing: 2px;
+  }
+
+  /* ================= 7. 三屏草图 ================= */
+  .screens-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(300px, 1fr));
+    gap: 30px;
+    align-items: start;
+    overflow-x: auto;
+    padding: 6px 4px 14px;
+  }
+  .screens-grid > div { min-width: 270px; }
+  .phone {
+    background: var(--paper-2);
+    border: 4px solid var(--ink);
+    border-radius: 38px;
+    box-shadow: 9px 9px 0 rgba(31,31,31,0.92);
+    padding: 11px;
+    position: relative;
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 7px; left: 50%;
+    transform: translateX(-50%);
+    width: 96px; height: 18px;
+    background: var(--ink);
+    border-radius: 999px;
+    z-index: 5;
+  }
+  .screen {
+    border: var(--line-thin);
+    border-radius: 28px;
+    background: var(--paper);
+    min-height: 800px;
+    padding: 16px 14px 18px;
+    overflow: hidden;
+    position: relative;
+  }
+  .screen-label {
+    text-align: center;
+    margin-top: 14px;
+    font-family: var(--font-strong);
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .screen-label b { color: var(--red); }
+  .screen-label .no { font-family: var(--font-comic); letter-spacing: 1px; color: var(--muted); }
+
+  .statusbar {
+    display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    padding: 4px 8px 12px;
+  }
+
+  /* --- 屏 1 首页 --- */
+  .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .logo-sticker {
+    font-family: var(--font-title);
+    font-size: 16px;
+    background: var(--yellow);
+    border: var(--line-thin);
+    border-radius: 10px;
+    padding: 5px 12px 6px;
+    box-shadow: 3px 3px 0 var(--ink);
+    transform: rotate(-1.2deg);
+  }
+  .logo-sticker .ai { color: var(--red); }
+  .avatar-dot {
+    width: 36px; height: 36px;
+    border: var(--line-thin);
+    border-radius: 50%;
+    background: #fff;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 900;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .hero-card {
+    border: var(--line);
+    border-radius: 18px;
+    background-color: var(--yellow);
+    background-image: radial-gradient(circle, rgba(31,31,31,0.14) 1.4px, transparent 1.5px);
+    background-size: 10px 10px;
+    box-shadow: var(--shadow-hard-sm);
+    padding: 18px 16px 76px;
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .hero-card .speech {
+    background: #fff;
+    border: var(--line-thin);
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-weight: 900;
+    font-size: 15px;
+    line-height: 1.55;
+    display: inline-block;
+    position: relative;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .hero-card .speech::after {
+    content: "";
+    position: absolute;
+    left: 26px; bottom: -13px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 14px solid var(--ink);
+  }
+  .hero-card .speech::before {
+    content: "";
+    position: absolute;
+    left: 29px; bottom: -8px; z-index: 1;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #fff;
+  }
+  .hero-card .mascot-wrap {
+    position: absolute;
+    right: 12px; bottom: 6px;
+    width: 120px; height: 120px;
+  }
+  .hero-card .sfx-boom {
+    position: absolute;
+    left: 34px; bottom: 40px;
+    font-family: var(--font-comic);
+    font-size: 23px;
+    color: #fff;
+    transform: rotate(-9deg);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink);
+  }
+  .input-card {
+    border: var(--line);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--shadow-hard-sm);
+    padding: 14px 15px;
+    margin-bottom: 14px;
+  }
+  .input-card .ph { font-size: 13.5px; color: #9a938a; font-weight: 500; }
+  .input-card .hint {
+    margin-top: 9px;
+    padding-top: 9px;
+    border-top: 2px dashed #d9d2c6;
+    font-size: 11.5px;
+    color: var(--muted);
+    display: flex; gap: 8px; align-items: center;
+  }
+  .mini-tag {
+    font-size: 10.5px;
+    font-weight: 900;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 1px 8px 2px;
+    background: var(--yellow-soft);
+  }
+  .start-btn {
+    width: 100%;
+    font-family: var(--font-strong);
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: #fff;
+    background: var(--red);
+    border: var(--line);
+    border-radius: 16px;
+    padding: 14px 0 15px;
+    box-shadow: var(--shadow-hard-sm);
+    text-align: center;
+    font-weight: 900;
+    margin-bottom: 16px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    font-size: 12px;
+    font-weight: 700;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    background: #fff;
+    padding: 4px 12px 5px;
+    box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .recent-card {
+    border: var(--line-thin);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 3px 3px 0 var(--ink);
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .recent-card .t { font-size: 13px; font-weight: 900; }
+  .recent-card .s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .recent-card .go {
+    font-family: var(--font-strong);
+    font-size: 12.5px;
+    background: var(--yellow);
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 4px 11px 5px;
+    white-space: nowrap;
+    box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .sec-flag {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 900;
+    margin: 2px 0 9px;
+    padding: 1px 4px;
+    background: linear-gradient(transparent 55%, var(--yellow) 55%, var(--yellow) 92%, transparent 92%);
+  }
+
+  /* --- 屏 2 答题反馈 --- */
+  .quiz-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .back-btn {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border: var(--line-thin);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 3px 3px 0 var(--ink);
+    font-weight: 900;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .quiz-prog { flex: 1; }
+  .quiz-prog .txt { font-size: 11.5px; font-weight: 900; color: var(--muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .q-card {
+    border: var(--line);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--shadow-hard-sm);
+    padding: 14px 15px;
+    margin-bottom: 13px;
+  }
+  .q-card .flags { display: flex; gap: 7px; margin-bottom: 10px; }
+  .q-card .type-tag {
+    font-size: 11px; font-weight: 900;
+    background: var(--blue); color: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 7px;
+    padding: 1px 9px 2px;
+  }
+  .q-card .lv-tag {
+    font-size: 11px; font-weight: 900;
+    background: var(--yellow); color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 7px;
+    padding: 1px 9px 2px;
+  }
+  .q-card .stem { font-size: 15.5px; font-weight: 900; line-height: 1.6; }
+  .opt-list { margin-bottom: 15px; }
+  .opt.list-item { margin-bottom: 10px; padding: 11px 13px; font-size: 13px; }
+  .feedback-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .feedback-row .fb-text { font-weight: 900; font-size: 16px; }
+  .feedback-row .fb-sub { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .fb-card {
+    border: var(--line);
+    border-radius: 16px;
+    background: #FDF1EE;
+    box-shadow: var(--shadow-hard-sm);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+  .fb-card .stamp { width: 58px; height: 58px; font-size: 23px; flex-shrink: 0; }
+  .kb-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 900;
+    border: 2.5px solid var(--ink);
+    background: #fff;
+    border-radius: 999px;
+    padding: 3px 10px 4px;
+    box-shadow: 2.5px 2.5px 0 var(--ink);
+    margin-top: 10px;
+  }
+  .explain { margin-bottom: 16px; }
+  .explain .bubble { font-size: 13px; }
+  .next-btn {
+    width: 100%;
+    font-family: var(--font-strong);
+    font-size: 17px;
+    letter-spacing: 1px;
+    color: var(--ink);
+    background: var(--yellow);
+    border: var(--line);
+    border-radius: 16px;
+    padding: 13px 0 14px;
+    box-shadow: var(--shadow-hard-sm);
+    text-align: center;
+    font-weight: 900;
+  }
+
+  /* --- 屏 3 分享海报 --- */
+  .poster {
+    border: var(--line);
+    border-radius: 20px;
+    background-color: var(--red);
+    background-image: radial-gradient(circle, rgba(255,255,255,0.22) 1.5px, transparent 1.6px);
+    background-size: 11px 11px;
+    box-shadow: var(--shadow-hard);
+    padding: 18px 16px 16px;
+    min-height: 760px;
+    position: relative;
+    overflow: hidden;
+  }
+  .poster .top-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 4px 13px 5px;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 3px 3px 0 var(--ink);
+    margin-bottom: 50px;
+    transform: rotate(-1.5deg);
+  }
+  .poster-title {
+    text-align: center;
+    font-family: var(--font-title);
+    font-size: 32px;
+    color: var(--yellow);
+    line-height: 1.3;
+    -webkit-text-stroke: 1.5px var(--ink);
+    text-shadow: 3.5px 3.5px 0 var(--ink);
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+  }
+  .poster-quote {
+    background: #fff;
+    border: var(--line);
+    border-radius: 18px;
+    box-shadow: 6px 6px 0 rgba(31,31,31,0.9);
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .poster-quote .q-mark {
+    font-family: var(--font-comic);
+    font-size: 34px;
+    color: var(--red);
+    line-height: 1;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .poster-quote .q-text { font-family: var(--font-strong); font-size: 20px; line-height: 1.6; letter-spacing: 0.5px; }
+  .poster-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 26px;
+  }
+  .stat-box {
+    border: var(--line);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.94);
+    box-shadow: 4px 4px 0 rgba(31,31,31,0.9);
+    padding: 10px 6px 9px;
+    text-align: center;
+  }
+  .stat-box .v { font-family: var(--font-num); font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat-box .v.red { color: var(--red); }
+  .stat-box .k { font-size: 11px; font-weight: 900; color: var(--muted); margin-top: 2px; }
+  .poster-foot {
+    background: #fff;
+    border: var(--line);
+    border-radius: 16px;
+    box-shadow: 5px 5px 0 rgba(31,31,31,0.9);
+    padding: 13px 15px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-top: 34px;
+  }
+  .qr-placeholder {
+    width: 74px; height: 74px;
+    border: 2.5px solid var(--ink);
+    border-radius: 10px;
+    background:
+      conic-gradient(from 90deg, var(--ink) 0 25%, #fff 25% 50%, var(--ink) 50% 75%, #fff 75% 100%);
+    background-size: 14px 14px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .qr-placeholder::after {
+    content: "";
+    position: absolute;
+    inset: 22px;
+    background: #fff;
+    border: 2.5px solid var(--ink);
+    border-radius: 4px;
+  }
+  .poster-foot .t1 { font-size: 13.5px; font-weight: 900; }
+  .poster-foot .t2 { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+  .poster-mascot {
+    position: absolute;
+    right: -6px; top: 46px;
+    width: 112px; height: 112px;
+    transform: rotate(6deg);
+  }
+  .poster-sfx {
+    position: absolute;
+    left: 12px; top: 122px;
+    font-family: var(--font-comic);
+    font-size: 24px;
+    color: #fff;
+    transform: rotate(-8deg);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink);
+  }
+
+  /* ================= 8. 文件规划 ================= */
+  .plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .plan-card { padding: 20px 18px; position: relative; }
+  .plan-card .p-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 13px;
+  }
+  .plan-card .p-no {
+    font-family: var(--font-comic);
+    font-size: 15px;
+    background: var(--ink);
+    color: var(--yellow);
+    border-radius: 8px;
+    padding: 3px 10px 5px;
+    letter-spacing: 1px;
+  }
+  .plan-card h3 { font-family: var(--font-title); font-size: 18px; }
+  .plan-card ul { list-style: none; }
+  .plan-card li {
+    font-size: 13px;
+    padding: 5.5px 0 5.5px 25px;
+    position: relative;
+    color: #3a3a3a;
+    font-weight: 500;
+  }
+  .plan-card li::before {
+    content: "✓";
+    position: absolute;
+    left: 3px;
+    font-weight: 900;
+    color: var(--green-deep);
+  }
+  .plan-card li.doing::before { content: "▶"; color: var(--red); }
+  .plan-card .badge-cur {
+    position: absolute;
+    top: -13px; right: 14px;
+    background: var(--red);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 900;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 2px 11px 3px;
+    box-shadow: 3px 3px 0 var(--ink);
+    transform: rotate(2deg);
+  }
+
+  /* ================= 9. 确认清单 ================= */
+  .check-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+  .check-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: var(--line-thin);
+    border-radius: 14px;
+    background: var(--paper-2);
+    box-shadow: 3px 3px 0 var(--ink);
+    padding: 13px 15px;
+  }
+  .check-item .num {
+    font-family: var(--font-comic);
+    font-size: 16px;
+    background: var(--yellow);
+    border: 2.5px solid var(--ink);
+    border-radius: 10px;
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .check-item .ct { font-size: 13.5px; font-weight: 800; line-height: 1.6; }
+  .check-item .ct small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+  .foot-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    margin-top: 46px;
+    font-weight: 500;
+  }
+
+  /* ================= 响应式 ================= */
+  @media (max-width: 1240px) {
+    .research-grid { grid-template-columns: repeat(2, 1fr); }
+    .color-grid { grid-template-columns: repeat(3, 1fr); }
+    .gallery { grid-template-columns: repeat(2, 1fr); }
+    .screens-grid { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
+    .plan-grid { grid-template-columns: 1fr; }
+    .font-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 860px) {
+    .comic-strip { grid-template-columns: 1fr; }
+    .comic-cell { border-right: none; border-bottom: 4px solid var(--ink); }
+    .comic-cell:last-child { border-bottom: none; }
+    .screens-grid { grid-template-columns: 1fr; }
+    .research-grid, .font-grid { grid-template-columns: 1fr; }
+    .color-grid { grid-template-columns: repeat(2, 1fr); }
+    .check-list { grid-template-columns: 1fr; }
+    .gallery { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ======= 顶部横幅 ======= -->
+  <div class="banner">
+    <span class="pin">📌</span>
+    <span>设计方向确认稿 —— 这是「草图 + 风格提案」，请先确认方向；确认后我会按此风格产出完整原型（核心流程 / 扩展功能 / 设计系统板，一行三列响应式）。</span>
+  </div>
+
+  <!-- ======= 页头 ======= -->
+  <header class="page-head">
+    <div class="kicker">COMIC STYLE · DESIGN PROPOSAL</div>
+    <h1>AI 闯关学习 · <span class="hl">漫画闯关风</span></h1>
+    <p class="sub">从《阿衰 on line》的意境出发：<b>学渣逆袭的乐观精神 + 粗描边漫画的视觉语言</b></p>
+  </header>
+
+  <!-- ======= 1. 调研速览 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">1</div>
+      <h2>联网调研速览 · 同类产品怎么做的</h2>
+      <span class="note">数据来源：多邻国官方方法论 / 人人都是产品经理拆解 / 优设小程序设计指南</span>
+    </div>
+    <div class="research-grid">
+      <div class="research-card">
+        <span class="tag">游戏化标杆</span>
+        <h3>多邻国 Duolingo</h3>
+        <p><b>“让失败感觉安全”</b>：答错时用温和动画 + 鼓励反馈，而不是刺眼的红色警告；角色（猫头鹰）是情感载体，给了用户“玩乐的许可”。</p>
+      </div>
+      <div class="research-card">
+        <span class="tag">进度设计</span>
+        <h3>多层进度系统</h3>
+        <p>经验值 / 连胜 / 宝石 / 等级 / 排行榜<b>多层并行</b>，无论表现如何，永远有某个维度在推进——这是留存的核心引擎。</p>
+      </div>
+      <div class="research-card">
+        <span class="tag">国内现状</span>
+        <h3>答题类小程序</h3>
+        <p>卡片化 + 即时反馈 + 金币排行已是标配，但普遍<b>“工具感”重、缺人格化情绪价值</b>——这正是我们差异化的机会。</p>
+      </div>
+      <div class="research-card">
+        <span class="tag">平台规范</span>
+        <h3>小程序体验基线</h3>
+        <p>一屏一事、点击热区 ≥ 44px、导航极简、加载必有反馈。漫画风要<b>在规范内做夸张</b>，热闹但不能乱。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 2. 意境解读（三格漫画） ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">2</div>
+      <h2>意境解读 · 把《阿衰》翻译成产品灵魂</h2>
+      <span class="note">原著考据：阿衰，怕踢中学初二学生，432 次考试零分仍乐观，特技是放屁与改造机械</span>
+    </div>
+    <div class="comic-strip">
+      <div class="comic-cell">
+        <div class="frame-no">FRAME 01</div>
+        <div class="art">
+          <div class="bubble-mini">“又考零分了…嘿嘿，没关系！”</div>
+        </div>
+        <h3>学渣的日常</h3>
+        <p>成绩垫底、浑身缺点、日常出糗——但从不卖惨，永远笑嘻嘻。这是<b>普通小人物的共同心理写照</b>。</p>
+      </div>
+      <div class="comic-cell">
+        <div class="frame-no">FRAME 02</div>
+        <div class="art">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:38px;">📚</span>
+            <span class="deco-sfx" style="font-size:30px;">→</span>
+            <span style="font-size:38px;">🎮</span>
+          </div>
+        </div>
+        <h3>知识变关卡</h3>
+        <p>AI 把任何知识变成一关关的题目：<b>答错不丢人，错题是升级材料</b>；学习像打游戏，一关一关往上爬。</p>
+      </div>
+      <div class="comic-cell">
+        <div class="frame-no">FRAME 03</div>
+        <div class="art">
+          <span style="font-size:44px;">🏆</span>
+        </div>
+        <h3>逆袭的快乐</h3>
+        <p>通关、拿 XP、上排行榜、晒战报——<b>“今天我也能通关”</b>的爽感，就是产品要交付的第一情绪。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 3. 设计映射表 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">3</div>
+      <h2>漫画元素 → UI 设计语言映射</h2>
+      <span class="note">原著画风考据：“造型洗练概括、动作夸张、线条干净明快、节奏感强”</span>
+    </div>
+    <div class="map-table">
+      <div class="map-row">
+        <div class="from"><span class="emoji">🖊️</span>粗黑描边 + 扁平鲜艳色块（美漫技法）</div>
+        <div class="to"><b>组件语言</b>：所有卡片 / 按钮 = 3px 墨线黑描边 + 4px 硬阴影（无模糊），扁平高饱和色块；按下时向右下位移，像“戳进纸面”</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">💬</span>黄色对话框（封面招牌元素）</div>
+        <div class="to"><b>提示系统</b>：AI 讲解、引导文案、鼓励语全部用“带尾巴的对话框气泡”承载，让机器说话像漫画对白</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">💥</span>爆炸贴纸 / 拟声词（BAM! 轰！叮！）</div>
+        <div class="to"><b>情绪反馈</b>：答对 = 爆炸星形贴纸 + “叮！答对啦”；连击 = “COMBO ×3”；升级 = “LEVEL UP!”（配 Bangers 漫画体）</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">📝</span>老师的红笔批改（√ × 大章）</div>
+        <div class="to"><b>答题批改</b>：对错反馈做成“作业本批改章”——答对盖绿色 √ 章、答错盖红色 × 章 + 手写批注，把挫败感变成校园梗</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">🦴</span>阿衰胸口的骨头图案（经典记忆点）</div>
+        <div class="to"><b>彩蛋系统</b>：成就徽章 / 空状态插画 / 加载页里埋“骨头、臭豆腐、蘑菇头”级别的趣味彩蛋（克制、点到为止）</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">🎭</span>“每一话开头阿衰扮演其他角色”</div>
+        <div class="to"><b>加载体验</b>：AI 生成时，吉祥物扮演厨师 / 侦探 / 图书管理员…“正在替你翻遍全网找料”，把等待变成笑点</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">🔴</span>单行本封面：大红底 + 黄字 + 黑描边标题</div>
+        <div class="to"><b>分享海报</b>：完整复刻封面质感——大红底 + 网点 + 黄色爆炸标题字 + 白色对话框装金句，天生适合朋友圈传播</div>
+      </div>
+      <div class="map-row">
+        <div class="from"><span class="emoji">😂</span>自嘲式幽默台词</div>
+        <div class="to"><b>文案语气</b>：“噗——答错了，没关系，错题才是升级材料”；“你比 86% 的闯关者答得都快”——接地气、不端着的鼓励</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 4. 色彩体系 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">4</div>
+      <h2>色彩体系 · 取自封面与角色的经典配色</h2>
+      <span class="note">主色 = 封面大红；底色 = 漫画纸米白；点缀 = 角色身上的黄 / 绿 / 橙</span>
+    </div>
+    <div class="color-grid">
+      <div class="swatch">
+        <div class="chip-color" style="background:#E8432E;"><div class="dots-ov"></div></div>
+        <div class="meta"><div class="name">阿衰红 · 主色</div><div class="hex">#E8432E</div><div class="use">主 CTA、海报底、答错警示、Logo 点缀</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip-color" style="background:#FFC93C;"><div class="dots-ov"></div></div>
+        <div class="meta"><div class="name">衰头黄 · 辅色</div><div class="hex">#FFC93C</div><div class="use">对话框、贴纸、XP、次按钮、高亮</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip-color" style="background:#1F1F1F;"><div class="dots-ov"></div></div>
+        <div class="meta"><div class="name">墨线黑 · 结构色</div><div class="hex">#1F1F1F</div><div class="use">全部描边、正文、硬阴影、标题</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip-color" style="background:#FFF6E3;"><div class="dots-ov"></div></div>
+        <div class="meta"><div class="name">漫画纸 · 底色</div><div class="hex">#FFF6E3</div><div class="use">页面背景（带网点纹理）：像漫画原稿纸</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip-color" style="background:#3FA34D;"><div class="dots-ov"></div></div>
+        <div class="meta"><div class="name">草绿 · 正确</div><div class="hex">#3FA34D</div><div class="use">答对反馈、√ 章、成长曲线（取自角色裤色）</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip-color" style="background:#4A9BFF;"><div class="dots-ov"></div></div>
+        <div class="meta"><div class="name">天蓝 · 辅助</div><div class="hex">#4A9BFF</div><div class="use">信息标签、链接、题型标识、冷静点缀</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 5. 字体 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">5</div>
+      <h2>字体层级 · 手写搞怪 × 清晰可读</h2>
+      <span class="note">标题搞怪、正文克制——趣味只放在“表情”上，不放在“阅读”上</span>
+    </div>
+    <div class="font-grid">
+      <div class="card font-card">
+        <div class="label"><span>大标题 / 页面主视觉</span><span>ZCOOL KuaiLe 站酷快乐体</span></div>
+        <div class="demo-title">嘿！今天把什么<br>变成关卡？</div>
+      </div>
+      <div class="card font-card">
+        <div class="label"><span>拟声词 / 数字（XP·金币·正确率）</span><span>Bangers + Fredoka</span></div>
+        <div class="demo-comic">DING! 叮！</div>
+        <div class="demo-num" style="margin-top:8px;">+120 XP <span style="color:var(--red);">87%</span></div>
+      </div>
+      <div class="card font-card">
+        <div class="label"><span>正文 / 题干 / 讲解</span><span>Noto Sans SC</span></div>
+        <div class="demo-body">题干和知识讲解使用标准黑体，字号 14–16px、行高 1.7，保证长时间阅读不累——热闹留给装饰，专注留给内容。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 6. 组件画廊 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">6</div>
+      <h2>核心组件预览 · 全部带墨线描边与硬阴影</h2>
+    </div>
+    <div class="gallery">
+
+      <div class="card g-card">
+        <h4>按钮</h4>
+        <div class="g-row" style="flex-direction:column;align-items:stretch;">
+          <span class="btn btn-primary">⚡ 开始生成闯关！</span>
+          <span class="btn btn-secondary">下一题 →</span>
+          <span class="btn btn-ghost">分享战报</span>
+        </div>
+      </div>
+
+      <div class="card g-card">
+        <h4>选项卡 · 四态</h4>
+        <div class="opt"><span class="key">A</span>未作答状态</div>
+        <div class="opt selected"><span class="key">B</span>已选中（黄）</div>
+        <div class="opt correct"><span class="key">C</span>正确答案（绿 + √）<span class="badge-mini">✅</span></div>
+        <div class="opt wrong"><span class="key">D</span>答错所选（红 + ×）<span class="badge-mini">❌</span></div>
+      </div>
+
+      <div class="card g-card">
+        <h4>讲解气泡 / 贴纸 / 批改章</h4>
+        <div class="g-row" style="flex-direction:column;align-items:flex-start;gap:16px;">
+          <div class="bubble tail" style="width:100%;">RAG = 先查资料、再写答案。像考试允许翻书答题 📖</div>
+          <div class="g-row" style="gap:16px;">
+            <div class="stamp ok">√</div>
+            <div class="stamp no">×</div>
+            <div class="boom-wrap sm">
+              <svg viewBox="0 0 120 120"><polygon fill="#FFC93C" stroke="#1F1F1F" stroke-width="4.5" stroke-linejoin="round" points="60,4 76.5,25.8 103.7,25.1 97,51.5 114.6,72.4 89.7,83.7 84.4,110.4 60,98 35.7,110.5 30.3,83.7 5.4,72.5 23,51.5 16.2,25.1 43.5,25.8"/></svg>
+              <span class="boom-text">答对啦！</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card g-card">
+        <h4>徽章 / 进度 / 装饰素材</h4>
+        <div class="g-row" style="margin-bottom:14px;">
+          <span class="badge xp"><span class="ic">⚡</span>+120 XP</span>
+          <span class="badge star"><span class="ic">⭐</span>× 3</span>
+          <span class="badge combo"><span class="ic">🔥</span>COMBO×3</span>
+        </div>
+        <div class="prog-demo" style="margin-bottom:16px;">
+          <div class="quiz-prog" style="margin-bottom:5px;">
+            <div class="txt" style="font-size:11px;font-weight:900;color:var(--muted);display:flex;justify-content:space-between;"><span>第 3 关 / 共 5 关</span><span>60%</span></div>
+          </div>
+          <div class="prog-track"><div class="prog-fill"></div></div>
+        </div>
+        <div class="g-row">
+          <div class="deco-dot"></div>
+          <div class="deco-speed"></div>
+          <div class="deco-tape">知识点</div>
+          <div class="deco-bone">
+            <svg width="34" height="20" viewBox="0 0 34 20"><g fill="#fff" stroke="#1F1F1F" stroke-width="2.5"><circle cx="6" cy="6.5" r="3.6"/><circle cx="6" cy="13.5" r="3.6"/><circle cx="28" cy="6.5" r="3.6"/><circle cx="28" cy="13.5" r="3.6"/><rect x="6" y="7" width="22" height="6" rx="1.5"/></g></svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======= 7. 三屏草图 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">7</div>
+      <h2>关键三屏 · 中保真草图（方向示意）</h2>
+      <span class="note">正式稿将按此方向补齐全部页面与状态，并精细打磨</span>
+    </div>
+    <div class="screens-grid">
+
+      <!-- ===== 屏 1：首页 ===== -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+            <div class="home-top">
+              <div class="logo-sticker"><span class="ai">AI</span> 闯关学习</div>
+              <div class="avatar-dot">我</div>
+            </div>
+
+            <div class="hero-card">
+              <div class="speech">嘿！今天想把什么<br>变成你的关卡？</div>
+              <div class="sfx-boom">SHUA!</div>
+              <div class="mascot-wrap">
+                <svg viewBox="0 0 140 140" width="120" height="120">
+                  <!-- 身体 -->
+                  <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+                  <!-- 骨头图案 -->
+                  <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+                    <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+                    <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+                    <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+                  </g>
+                  <!-- 头 -->
+                  <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+                  <!-- 蘑菇头 -->
+                  <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+                  <!-- 眼睛（半耷拉） -->
+                  <line x1="55" y1="61" x2="64" y2="61" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+                  <line x1="77" y1="61" x2="86" y2="61" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+                  <!-- 嘴 -->
+                  <path d="M62 72 q8 7 16 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+                  <!-- 手 -->
+                  <circle cx="36" cy="103" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+                  <circle cx="104" cy="103" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+                  <!-- 腮红 -->
+                  <circle cx="50" cy="70" r="4" fill="#FFB0A0"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="input-card">
+              <div class="ph">✏️ 输入一个知识点，比如：什么是 RAG？</div>
+              <div class="hint"><span class="mini-tag">提示</span>一句话 / 一段文字 / 一个主题都可以</div>
+            </div>
+
+            <div class="start-btn">⚡ 开始生成闯关！</div>
+
+            <div class="sec-flag">试试这些 👇</div>
+            <div class="chips">
+              <span class="chip">Python 入门</span>
+              <span class="chip">量子力学</span>
+              <span class="chip">法国大革命</span>
+              <span class="chip">剪辑技巧</span>
+            </div>
+
+            <div class="sec-flag">上次没打完的 👇</div>
+            <div class="recent-card">
+              <div>
+                <div class="t">RAG 入门 · 第 3/5 关</div>
+                <div class="s">上次正确率 80% · 错 1 题</div>
+              </div>
+              <span class="go">继续 →</span>
+            </div>
+          </div>
+        </div>
+        <div class="screen-label"><span class="no">P.01</span> <b>首页</b> · 输入主题，一键生成闯关</div>
+      </div>
+
+      <!-- ===== 屏 2：答题反馈 ===== -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+            <div class="quiz-top">
+              <div class="back-btn">←</div>
+              <div class="quiz-prog">
+                <div class="txt"><span>第 3 关 / 共 5 关</span><span>RAG 入门</span></div>
+                <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:60%;"></div></div>
+              </div>
+              <span class="badge xp"><span class="ic">⚡</span>120</span>
+            </div>
+
+            <div class="q-card">
+              <div class="flags">
+                <span class="type-tag">单选</span>
+                <span class="lv-tag">难度 · 中</span>
+              </div>
+              <div class="stem">RAG 与传统搜索引擎，<br>最大的区别是什么？</div>
+            </div>
+
+            <div class="opt-list">
+              <div class="opt list-item correct"><span class="key">A</span>先检索资料，再由 AI 基于资料生成答案<span class="badge-mini">✅</span></div>
+              <div class="opt list-item wrong"><span class="key">B</span>搜索速度更快、收录网页更多<span class="badge-mini">❌</span></div>
+              <div class="opt list-item"><span class="key">C</span>只能用于企业内部知识库</div>
+              <div class="opt list-item"><span class="key">D</span>完全不需要联网就能用</div>
+            </div>
+
+            <div class="fb-card">
+              <div class="stamp no">×</div>
+              <div>
+                <div class="fb-text" style="font-size:15px;">噗——答错了！</div>
+                <div class="fb-sub">没关系，错题是升级材料 · +5 经验</div>
+              </div>
+            </div>
+
+            <div class="explain">
+              <div class="bubble tail">
+                RAG = 先“查资料”、再“写答案”。<br>像考试时允许翻书答题——AI 把全网内容当参考书，答案自然更准、更新 📖
+              </div>
+              <div style="margin-top:16px;">
+                <span class="kb-tag">🏷️ 知识点：检索增强生成</span>
+              </div>
+            </div>
+
+            <div class="next-btn">懂了，下一题 →</div>
+          </div>
+        </div>
+        <div class="screen-label"><span class="no">P.02</span> <b>答题反馈</b> · 红章批改 + 气泡讲解</div>
+      </div>
+
+      <!-- ===== 屏 3：分享海报 ===== -->
+      <div>
+        <div class="phone">
+          <div class="screen" style="padding:10px;">
+            <div class="poster">
+              <span class="poster-sfx">BOOM!</span>
+              <div class="top-brand">🤖 AI 闯关学习 · 学习战报</div>
+
+              <div class="poster-mascot">
+                <svg viewBox="0 0 140 140" width="112" height="112">
+                  <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+                  <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+                    <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+                    <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+                    <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+                  </g>
+                  <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+                  <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+                  <path d="M55 62 q4 -4 9 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M77 62 q4 -4 9 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M62 72 q8 7 16 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+                  <circle cx="36" cy="94" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+                  <circle cx="104" cy="94" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+                  <circle cx="50" cy="70" r="4" fill="#FFB0A0"/>
+                </svg>
+              </div>
+
+              <div class="poster-title">今天我又<br>闯过一关！</div>
+
+              <div class="poster-quote">
+                <span class="q-mark">“</span>
+                <div class="q-text">把知识做成关卡，<br>记忆会更深。</div>
+              </div>
+
+              <div class="poster-stats">
+                <div class="stat-box"><div class="v red">80%</div><div class="k">正确率</div></div>
+                <div class="stat-box"><div class="v">+120</div><div class="k">XP 经验</div></div>
+                <div class="stat-box"><div class="v">×3</div><div class="k">最高连对</div></div>
+              </div>
+
+              <div class="poster-foot">
+                <div class="qr-placeholder"></div>
+                <div>
+                  <div class="t1">长按扫码，来和我一起闯关</div>
+                  <div class="t2">输入任何知识，AI 帮你出题</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-label"><span class="no">P.03</span> <b>分享海报</b> · 复刻单行本封面质感</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======= 8. 文件规划 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">8</div>
+      <h2>完整原型文件规划（确认后开工）</h2>
+      <span class="note">每个文件：一行三列 · 响应式 · 手机屏 390px</span>
+    </div>
+    <div class="plan-grid">
+      <div class="card plan-card">
+        <span class="badge-cur">你正在看的是它的风格样板</span>
+        <div class="p-head"><span class="p-no">FILE 01</span><h3>核心流程原型</h3></div>
+        <ul>
+          <li>首页：输入主题 / 示例引导</li>
+          <li>AI 生成中：吉祥物角色扮演加载页</li>
+          <li>闯关页：单选 / 多选 / 判断题</li>
+          <li>即时反馈：答对欢呼 / 答错自嘲 + 讲解气泡</li>
+          <li>连击、升级、结算通关弹层</li>
+          <li>复盘报告：正确率 + 知识总结 + 薄弱点</li>
+          <li>分享海报与保存流程</li>
+        </ul>
+      </div>
+      <div class="card plan-card">
+        <div class="p-head"><span class="p-no">FILE 02</span><h3>扩展功能原型</h3></div>
+        <ul>
+          <li>个人中心：我的知识库 / 学习统计</li>
+          <li>数据分析：正确率趋势 / 知识树图表</li>
+          <li>多源输入：文档上传 / 网页 / 视频链接</li>
+          <li>RAG 私有知识库：文件夹管理</li>
+          <li>错题本：遗忘曲线复习提醒</li>
+          <li>排行榜 / 好友 PK 对战</li>
+          <li>VIP 会员与商业化页面</li>
+        </ul>
+      </div>
+      <div class="card plan-card">
+        <div class="p-head"><span class="p-no">FILE 03</span><h3>设计系统板</h3></div>
+        <ul>
+          <li>完整色彩 / 字体 / 间距规范</li>
+          <li>全部组件状态库（含交互态）</li>
+          <li>图标与插画风格规范</li>
+          <li>动效与微交互说明（按压 / 弹跳 / 盖章）</li>
+          <li>文案语气手册（对错 / 加载 / 空状态）</li>
+          <li>开发交付标注指引</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= 9. 待确认 ======= -->
+  <section>
+    <div class="sec-title">
+      <div class="no">9</div>
+      <h2>待你确认 · 请回复编号与选项</h2>
+    </div>
+    <div class="check-list">
+      <div class="check-item">
+        <div class="num">01</div>
+        <div class="ct">整体风格方向：漫画闯关风（粗描边 + 对话框 + 批改章 + 爆炸贴纸 + 大红黄黑配色）
+          <small>确认后我将按此风格做完整原型；如觉得太夸张/不够夸张，也请直说</small>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="num">02</div>
+        <div class="ct">吉祥物与版权：推荐用「原创蘑菇头学渣少年」承载意境（不直接用阿衰形象，规避版权风险）
+          <small>如果你只是学习/概念项目、想直接用阿衰原形象，也请说明</small>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="num">03</div>
+        <div class="ct">色彩方向：大红 + 明黄 + 墨黑 + 漫画纸米白（当前方案，最贴近原著封面）
+          <small>备选：以黄为主更轻快 / 加入更多蓝色清爽感</small>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="num">04</div>
+        <div class="ct">页面范围与文件规划：核心流程 / 扩展功能 / 设计系统板 三个文件
+          <small>扩展功能是否要包含 VIP 付费、排行榜、PK 对战？</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot-note">—— 设计方向确认稿 v1 · 确认后产出完整原型 ——</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 闯关学习 · 核心流程原型（漫画闯关风）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --red: #E8432E; --red-deep: #C33722;
+    --yellow: #FFC93C; --yellow-soft: #FFE9AE;
+    --paper: #FFF6E3; --paper-2: #FFFDF6;
+    --ink: #1F1F1F;
+    --green: #3FA34D; --green-deep: #2E7D3A; --green-soft: #D8F0DC;
+    --blue: #4A9BFF;
+    --muted: #6B6459;
+    --font-title: "ZCOOL KuaiLe", "ZCOOL QingKe HuangYou", "Yuanti SC", "Microsoft YaHei", sans-serif;
+    --font-strong: "ZCOOL QingKe HuangYou", "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif;
+    --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-comic: "Bangers", "ZCOOL KuaiLe", cursive;
+    --font-num: "Fredoka", "Arial Rounded MT Bold", "Noto Sans SC", sans-serif;
+    --line: 3px solid var(--ink);
+    --line-thin: 2.5px solid var(--ink);
+    --shadow: 6px 6px 0 var(--ink);
+    --shadow-sm: 4px 4px 0 var(--ink);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); color: var(--ink);
+    background-color: var(--paper);
+    background-image: radial-gradient(circle, rgba(31,31,31,0.075) 1.2px, transparent 1.3px);
+    background-size: 13px 13px;
+    line-height: 1.65; padding: 26px 20px 90px;
+  }
+  .wrap { max-width: 1420px; margin: 0 auto; }
+
+  .page-head { text-align: center; margin-bottom: 40px; }
+  .page-head .kicker {
+    display: inline-block; font-family: var(--font-comic); letter-spacing: 2px; font-size: 15px;
+    background: var(--ink); color: var(--yellow); padding: 3px 16px 5px; border-radius: 999px;
+    transform: rotate(-1.5deg); margin-bottom: 14px;
+  }
+  .page-head h1 { font-family: var(--font-title); font-size: clamp(28px, 4.5vw, 46px); letter-spacing: 1px; }
+  .page-head h1 .hl { color: var(--red); -webkit-text-stroke: 1.2px var(--ink); text-shadow: 3px 3px 0 var(--yellow); }
+  .page-head .sub { margin-top: 10px; color: var(--muted); font-size: 15px; font-weight: 500; }
+  .page-head .flow {
+    display: inline-flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px;
+    font-size: 12.5px; font-weight: 700;
+  }
+  .page-head .flow span {
+    background: #fff; border: 2.5px solid var(--ink); border-radius: 999px;
+    padding: 3px 12px 4px; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .page-head .flow span.hot { background: var(--yellow); }
+
+  /* ============ 网格与手机框 ============ */
+  .screens-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(300px, 1fr));
+    gap: 30px; align-items: start;
+    overflow-x: auto; padding: 6px 4px 14px;
+  }
+  .screens-grid > div { min-width: 270px; }
+  .phone {
+    background: var(--paper-2); border: 4px solid var(--ink); border-radius: 38px;
+    box-shadow: 9px 9px 0 rgba(31,31,31,0.92); padding: 11px; position: relative;
+  }
+  .phone::before {
+    content: ""; position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+    width: 96px; height: 18px; background: var(--ink); border-radius: 999px; z-index: 6;
+  }
+  .screen {
+    border: var(--line-thin); border-radius: 28px; background: var(--paper);
+    min-height: 800px; padding: 16px 14px 18px; overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .screen-label { text-align: center; margin-top: 14px; font-family: var(--font-strong); font-size: 15px; letter-spacing: 0.5px; }
+  .screen-label b { color: var(--red); }
+  .screen-label .no { font-family: var(--font-comic); letter-spacing: 1px; color: var(--muted); }
+  .screen-label .new { color: var(--blue); font-weight: 900; }
+
+  .statusbar { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--muted); padding: 4px 8px 12px; flex-shrink: 0; }
+
+  /* ============ 通用组件 ============ */
+  .bubble {
+    position: relative; background: var(--yellow); border: var(--line); border-radius: 16px;
+    padding: 12px 15px; font-size: 13px; font-weight: 600; line-height: 1.7; box-shadow: var(--shadow-sm);
+  }
+  .bubble.tail::after {
+    content: ""; position: absolute; left: 30px; bottom: -16px;
+    border-left: 9px solid transparent; border-right: 16px solid transparent; border-top: 17px solid var(--ink);
+  }
+  .bubble.tail::before {
+    content: ""; position: absolute; left: 34px; bottom: -10px; z-index: 1;
+    border-left: 5px solid transparent; border-right: 11px solid transparent; border-top: 12px solid var(--yellow);
+  }
+  .stamp {
+    width: 70px; height: 70px; border: 4px solid currentColor; border-radius: 50%;
+    display: grid; place-items: center; font-family: var(--font-title); font-size: 28px; font-weight: 900;
+    position: relative; transform: rotate(-12deg); background: rgba(255,255,255,0.6); flex-shrink: 0;
+  }
+  .stamp::after { content: ""; position: absolute; inset: 5px; border: 2px dashed currentColor; border-radius: 50%; opacity: 0.55; }
+  .stamp.ok { color: var(--green-deep); }
+  .stamp.no { color: var(--red-deep); }
+  .stamp.sm { width: 56px; height: 56px; font-size: 22px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; border: var(--line-thin); border-radius: 999px;
+    padding: 4px 12px 5px; font-weight: 900; font-size: 12.5px; box-shadow: 2.5px 2.5px 0 var(--ink); background: #fff;
+  }
+  .badge.xp { background: var(--yellow); font-family: var(--font-num); padding-top: 3px; }
+  .badge.combo { background: var(--red); color: #fff; }
+  .badge .ic { font-size: 14px; }
+
+  .prog-track {
+    height: 20px; border: var(--line-thin); border-radius: 999px; background: #fff;
+    box-shadow: 2.5px 2.5px 0 var(--ink); padding: 2.5px;
+  }
+  .prog-fill {
+    height: 100%; background: var(--yellow); border-radius: 999px; border: 2px solid var(--ink);
+    background-image: linear-gradient(45deg, rgba(31,31,31,0.14) 25%, transparent 25%, transparent 50%, rgba(31,31,31,0.14) 50%, rgba(31,31,31,0.14) 75%, transparent 75%);
+    background-size: 13px 13px;
+  }
+  .boom-wrap { position: relative; display: inline-grid; place-items: center; }
+  .boom-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .boom-wrap .boom-text { position: relative; z-index: 1; font-family: var(--font-title); font-weight: 900; text-align: center; line-height: 1.15; }
+  .boom-wrap.lg { width: 250px; height: 195px; }
+  .boom-wrap.lg .boom-text { font-size: 26px; }
+  .boom-wrap.md { width: 150px; height: 118px; }
+  .boom-wrap.md .boom-text { font-size: 17px; }
+
+  .mini-tag {
+    font-size: 10.5px; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px;
+    padding: 1px 8px 2px; background: var(--yellow-soft);
+  }
+  .caret { display: inline-block; width: 3px; height: 22px; background: var(--ink); vertical-align: middle; margin-left: 2px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .dotbg { background-image: radial-gradient(circle, rgba(31,31,31,0.13) 1.4px, transparent 1.5px); background-size: 10px 10px; }
+
+  /* ============ P01 首页 ============ */
+  .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .logo-sticker {
+    font-family: var(--font-title); font-size: 16px; background: var(--yellow);
+    border: var(--line-thin); border-radius: 10px; padding: 5px 12px 6px;
+    box-shadow: 3px 3px 0 var(--ink); transform: rotate(-1.2deg);
+  }
+  .logo-sticker .ai { color: var(--red); }
+  .avatar-dot {
+    width: 36px; height: 36px; border: var(--line-thin); border-radius: 50%; background: #fff;
+    display: grid; place-items: center; font-size: 12px; font-weight: 900; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .hero-card {
+    border: var(--line); border-radius: 18px; background-color: var(--yellow);
+    background-image: radial-gradient(circle, rgba(31,31,31,0.14) 1.4px, transparent 1.5px); background-size: 10px 10px;
+    box-shadow: var(--shadow-sm); padding: 18px 16px 76px; position: relative; margin-bottom: 16px; flex-shrink: 0;
+  }
+  .hero-card .speech {
+    background: #fff; border: var(--line-thin); border-radius: 14px; padding: 10px 14px;
+    font-weight: 900; font-size: 15px; line-height: 1.55; display: inline-block; position: relative;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .hero-card .speech::after {
+    content: ""; position: absolute; left: 26px; bottom: -13px;
+    border-left: 8px solid transparent; border-right: 14px solid transparent; border-top: 14px solid var(--ink);
+  }
+  .hero-card .speech::before {
+    content: ""; position: absolute; left: 29px; bottom: -8px; z-index: 1;
+    border-left: 5px solid transparent; border-right: 10px solid transparent; border-top: 10px solid #fff;
+  }
+  .hero-card .mascot-wrap { position: absolute; right: 12px; bottom: 4px; width: 118px; height: 118px; }
+  .hero-card .sfx-boom {
+    position: absolute; left: 34px; bottom: 36px; font-family: var(--font-comic); font-size: 23px;
+    color: #fff; transform: rotate(-9deg); letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink);
+  }
+  .input-card { border: var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); padding: 14px 15px; margin-bottom: 14px; }
+  .input-card .ph { font-size: 13.5px; color: #9a938a; font-weight: 500; }
+  .input-card .hint { margin-top: 9px; padding-top: 9px; border-top: 2px dashed #d9d2c6; font-size: 11.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .start-btn {
+    width: 100%; font-family: var(--font-strong); font-size: 18px; letter-spacing: 1px; color: #fff;
+    background: var(--red); border: var(--line); border-radius: 16px; padding: 14px 0 15px;
+    box-shadow: var(--shadow-sm); text-align: center; font-weight: 900; margin-bottom: 16px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    font-size: 12px; font-weight: 700; border: 2.5px solid var(--ink); border-radius: 999px;
+    background: #fff; padding: 4px 12px 5px; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .sec-flag { display: inline-block; font-size: 12.5px; font-weight: 900; margin: 2px 0 9px; padding: 1px 4px; background: linear-gradient(transparent 55%, var(--yellow) 55%, var(--yellow) 92%, transparent 92%); }
+  .recent-card {
+    border: var(--line-thin); border-radius: 14px; background: #fff; box-shadow: 3px 3px 0 var(--ink);
+    padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .recent-card .t { font-size: 13px; font-weight: 900; }
+  .recent-card .s { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .recent-card .go {
+    font-family: var(--font-strong); font-size: 12.5px; background: var(--yellow);
+    border: 2.5px solid var(--ink); border-radius: 999px; padding: 4px 11px 5px; white-space: nowrap; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+
+  /* ============ P02 配置弹层 ============ */
+  .sheet-dim { position: absolute; inset: 0; background: rgba(31,31,31,0.48); z-index: 3; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
+    background: var(--paper-2); border-top: 3px solid var(--ink); border-radius: 26px 26px 0 0;
+    padding: 12px 18px 20px; box-shadow: 0 -8px 0 rgba(31,31,31,0.15);
+  }
+  .sheet-handle { width: 54px; height: 6px; border-radius: 99px; background: var(--ink); opacity: .25; margin: 0 auto 12px; }
+  .sheet-title { font-family: var(--font-title); font-size: 22px; text-align: center; }
+  .sheet-sub { text-align: center; font-size: 12px; color: var(--muted); margin: 3px 0 16px; font-weight: 500; }
+  .sheet-label { font-size: 13px; font-weight: 900; margin: 14px 0 9px; display: flex; align-items: center; gap: 7px; }
+  .sheet-label .dot { width: 9px; height: 9px; background: var(--red); border: 2px solid var(--ink); border-radius: 50%; }
+  .type-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+  .type-chip {
+    border: 2.5px solid var(--ink); border-radius: 12px; padding: 9px 4px 8px; background: #fff;
+    box-shadow: 3px 3px 0 var(--ink); display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 900;
+  }
+  .type-chip .box {
+    width: 20px; height: 20px; border: 2.5px solid var(--ink); border-radius: 6px; background: #fff;
+    display: grid; place-items: center; font-size: 13px; color: transparent;
+  }
+  .type-chip.on { background: var(--yellow); }
+  .type-chip.on .box { background: var(--ink); color: var(--yellow); }
+  .seg { display: flex; border: 2.5px solid var(--ink); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 3px 3px 0 var(--ink); }
+  .seg span { flex: 1; text-align: center; padding: 9px 0; font-weight: 900; font-size: 13.5px; border-right: 2.5px solid var(--ink); }
+  .seg span:last-child { border-right: none; }
+  .seg span.on { background: var(--yellow); }
+  .sheet-cta {
+    margin-top: 20px; width: 100%; font-family: var(--font-strong); font-size: 17.5px; letter-spacing: 1px; color: #fff;
+    background: var(--red); border: var(--line); border-radius: 15px; padding: 13px 0 14px;
+    box-shadow: var(--shadow-sm); text-align: center; font-weight: 900;
+  }
+  .sheet-tip { text-align: center; font-size: 11px; color: var(--muted); margin-top: 10px; font-weight: 500; }
+
+  /* ============ P03 加载页 ============ */
+  .loading-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; }
+  .detective-wrap { position: relative; width: 190px; height: 165px; margin-bottom: 16px; }
+  .detective-wrap .mag {
+    position: absolute; right: -6px; top: 6px; transform: rotate(12deg);
+  }
+  .loading-bubble { max-width: 270px; margin-bottom: 26px; }
+  .steps { width: 100%; display: flex; flex-direction: column; gap: 9px; margin-bottom: 26px; }
+  .step {
+    display: flex; align-items: center; gap: 10px; border: 2.5px solid var(--ink); border-radius: 12px;
+    background: #fff; padding: 8px 13px; font-size: 13px; font-weight: 700; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .step .st-ic {
+    width: 22px; height: 22px; border: 2.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center;
+    font-size: 12px; background: var(--green-soft); flex-shrink: 0;
+  }
+  .step.doing { background: var(--yellow); }
+  .step.doing .st-ic { background: #fff; animation: spin 2.4s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-foot { font-size: 11.5px; color: var(--muted); font-weight: 500; }
+
+  /* ============ 答题页通用 ============ */
+  .quiz-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-shrink: 0; }
+  .back-btn {
+    width: 36px; height: 36px; display: grid; place-items: center; border: var(--line-thin);
+    border-radius: 12px; background: #fff; box-shadow: 3px 3px 0 var(--ink); font-weight: 900; font-size: 16px; flex-shrink: 0;
+  }
+  .quiz-prog { flex: 1; }
+  .quiz-prog .txt { font-size: 11.5px; font-weight: 900; color: var(--muted); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .q-card { border: var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); padding: 14px 15px; margin-bottom: 13px; }
+  .q-card .flags { display: flex; gap: 7px; margin-bottom: 10px; }
+  .q-card .type-tag { font-size: 11px; font-weight: 900; background: var(--blue); color: #fff; border: 2px solid var(--ink); border-radius: 7px; padding: 1px 9px 2px; }
+  .q-card .lv-tag { font-size: 11px; font-weight: 900; background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); border-radius: 7px; padding: 1px 9px 2px; }
+  .q-card .stem { font-size: 15.5px; font-weight: 900; line-height: 1.62; }
+  .q-card .stem .blank {
+    display: inline-block; min-width: 64px; border-bottom: 3px dashed var(--red); color: var(--red);
+    text-align: center; font-family: var(--font-title); line-height: 1.1;
+  }
+  .opt-list { margin-bottom: 15px; }
+  .opt {
+    display: flex; align-items: center; gap: 10px; border: var(--line-thin); background: #fff;
+    border-radius: 12px; padding: 11px 13px; font-size: 13px; font-weight: 700;
+    box-shadow: 3px 3px 0 rgba(31,31,31,0.85); width: 100%; margin-bottom: 10px; line-height: 1.5;
+  }
+  .opt .key {
+    font-family: var(--font-num); width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid var(--ink);
+    display: grid; place-items: center; font-size: 12.5px; font-weight: 700; flex-shrink: 0; background: #fff;
+  }
+  .opt .key.sq { border-radius: 7px; }
+  .opt.selected { background: var(--yellow); }
+  .opt.selected .key { background: var(--ink); color: var(--yellow); }
+  .opt.correct { background: var(--green-soft); border-color: var(--green-deep); }
+  .opt.correct .key { background: var(--green); color: #fff; border-color: var(--green-deep); }
+  .opt.wrong { background: #FADBD5; border-color: var(--red-deep); }
+  .opt.wrong .key { background: var(--red); color: #fff; border-color: var(--red-deep); }
+  .opt .badge-mini { margin-left: auto; font-size: 15px; flex-shrink: 0; }
+
+  .quiz-foot-tip {
+    margin-top: auto; border: 2.5px dashed #c9c0b2; border-radius: 13px; padding: 12px;
+    text-align: center; font-size: 12.5px; color: var(--muted); font-weight: 700;
+  }
+  .next-btn {
+    margin-top: auto; width: 100%; font-family: var(--font-strong); font-size: 17px; letter-spacing: 1px;
+    color: var(--ink); background: var(--yellow); border: var(--line); border-radius: 16px; padding: 13px 0 14px;
+    box-shadow: var(--shadow-sm); text-align: center; font-weight: 900;
+  }
+  .next-btn.red { background: var(--red); color: #fff; }
+
+  /* 判断题大按钮 */
+  .judge-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .judge-btn {
+    border: 3px solid var(--ink); border-radius: 18px; padding: 20px 0 17px; text-align: center;
+    font-family: var(--font-title); font-size: 25px; font-weight: 900; box-shadow: 5px 5px 0 var(--ink); background: #fff;
+  }
+  .judge-btn .sym { display: block; font-size: 34px; line-height: 1.1; font-family: var(--font-num); font-weight: 700; }
+  .judge-btn.yes { color: var(--green-deep); }
+  .judge-btn.no { color: var(--red); }
+  .judge-hint { text-align: center; font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 14px; }
+
+  /* 填空输入区 */
+  .fill-card { border: var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-sm); padding: 15px; margin-bottom: 15px; }
+  .fill-card .fc-label { font-size: 11.5px; font-weight: 900; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .fill-line { font-family: var(--font-title); font-size: 26px; letter-spacing: 4px; color: var(--ink); }
+  .fill-line .underline { display: inline-block; min-width: 120px; border-bottom: 3px solid var(--ink); }
+  .grade-box { border: var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 14px; }
+  .grade-row { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 2.5px solid var(--ink); }
+  .grade-row:last-child { border-bottom: none; }
+  .grade-row .gtag { font-size: 11px; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px; padding: 1px 9px 2px; background: #fff; flex-shrink: 0; }
+  .grade-row .ans { font-family: var(--font-title); font-size: 21px; letter-spacing: 2px; }
+  .grade-row.wrong .ans { color: var(--red-deep); text-decoration: line-through; text-decoration-thickness: 3px; }
+  .grade-row.wrong { background: #FDF1EE; }
+  .grade-row.right .ans { color: var(--green-deep); }
+  .grade-row.right { background: #EFF9F1; }
+
+  /* ============ 反馈/弹层 ============ */
+  .fb-card {
+    border: var(--line); border-radius: 16px; background: #FDF1EE; box-shadow: var(--shadow-sm);
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 15px;
+  }
+  .fb-card.good { background: #EFF9F1; }
+  .fb-text { font-weight: 900; font-size: 15.5px; }
+  .fb-sub { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .kb-tag {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 900;
+    border: 2.5px solid var(--ink); background: #fff; border-radius: 999px; padding: 3px 10px 4px;
+    box-shadow: 2.5px 2.5px 0 var(--ink); margin-top: 16px;
+  }
+  .modal-dim { position: absolute; inset: 0; background: rgba(31,31,31,0.55); z-index: 3; }
+  .modal-center { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+  .combo-stack { text-align: center; }
+  .combo-stack .sub-stickers { display: flex; gap: 12px; justify-content: center; margin: 18px 0 22px; }
+  .sub-sticker {
+    border: 2.5px solid var(--ink); border-radius: 12px; background: #fff; padding: 8px 14px;
+    font-weight: 900; font-size: 14px; box-shadow: 3px 3px 0 var(--ink); transform: rotate(-2deg);
+  }
+  .sub-sticker:nth-child(2) { transform: rotate(2deg); background: var(--yellow); }
+  .modal-btn {
+    font-family: var(--font-strong); font-size: 16px; letter-spacing: 1px; color: #fff; background: var(--red);
+    border: var(--line); border-radius: 14px; padding: 12px 0; width: 82%; text-align: center; font-weight: 900;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ============ P11 结算 ============ */
+  .stars { display: flex; gap: 10px; justify-content: center; margin: 6px 0 4px; }
+  .star { font-size: 40px; line-height: 1; color: var(--yellow); text-shadow: 2px 2px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink); }
+  .star.dim { color: #ddd3c2; }
+  .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+  .stat-box { border: var(--line); border-radius: 14px; background: #fff; box-shadow: 4px 4px 0 var(--ink); padding: 10px 6px 9px; text-align: center; }
+  .stat-box .v { font-family: var(--font-num); font-size: 21px; font-weight: 700; line-height: 1.2; }
+  .stat-box .v.red { color: var(--red); }
+  .stat-box .v.green { color: var(--green-deep); }
+  .stat-box .k { font-size: 11px; font-weight: 900; color: var(--muted); margin-top: 2px; }
+  .btn-col { display: flex; flex-direction: column; gap: 11px; margin-top: auto; }
+
+  /* ============ P12 报告 ============ */
+  .report-head {
+    border: var(--line); border-radius: 16px; background: var(--yellow); box-shadow: var(--shadow-sm);
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+  }
+  .report-head .t1 { font-family: var(--font-title); font-size: 18px; }
+  .report-head .t2 { font-size: 11px; font-weight: 700; color: rgba(31,31,31,0.65); }
+  .ring-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 15px; }
+  .ring {
+    width: 128px; height: 128px; border-radius: 50%; position: relative; flex-shrink: 0;
+    background: conic-gradient(var(--green) 0 288deg, #EAE2D4 288deg 360deg);
+    border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink);
+  }
+  .ring::before { content: ""; position: absolute; inset: 17px; background: var(--paper-2); border-radius: 50%; border: 3px solid var(--ink); }
+  .ring .val { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-num); font-size: 30px; font-weight: 700; z-index: 1; }
+  .ring-copy { font-size: 13px; font-weight: 700; line-height: 1.75; }
+  .ring-copy b { color: var(--red); }
+  .sum-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 15px; }
+  .sum-item {
+    display: flex; gap: 10px; border: 2.5px solid var(--ink); border-radius: 12px; background: #fff;
+    padding: 9px 12px; font-size: 12.5px; font-weight: 600; line-height: 1.6; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .sum-item .n {
+    font-family: var(--font-comic); font-size: 15px; color: var(--red); flex-shrink: 0; line-height: 1.3;
+  }
+  .point-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 15px; }
+  .point-card { border: var(--line); border-radius: 14px; background: #fff; padding: 11px 12px; box-shadow: 4px 4px 0 var(--ink); }
+  .point-card.good { border-color: var(--green-deep); }
+  .point-card.bad { border-color: var(--red-deep); }
+  .point-card .pt { font-size: 12px; font-weight: 900; margin-bottom: 7px; display: flex; align-items: center; gap: 6px; }
+  .point-card.good .pt { color: var(--green-deep); }
+  .point-card.bad .pt { color: var(--red-deep); }
+  .point-card ul { list-style: none; }
+  .point-card li { font-size: 11.5px; font-weight: 600; line-height: 1.6; padding: 3px 0 3px 15px; position: relative; color: #3a3a3a; }
+  .point-card li::before { content: "·"; position: absolute; left: 3px; font-weight: 900; }
+  .advice-bar {
+    border: 2.5px dashed var(--ink); border-radius: 13px; background: var(--yellow-soft);
+    padding: 10px 13px; font-size: 12.5px; font-weight: 700; line-height: 1.65; margin-bottom: 15px;
+  }
+
+  /* ============ P13 海报 + 操作栏 ============ */
+  .poster {
+    border: var(--line); border-radius: 20px; background-color: var(--red);
+    background-image: radial-gradient(circle, rgba(255,255,255,0.22) 1.5px, transparent 1.6px); background-size: 11px 11px;
+    box-shadow: var(--shadow); padding: 16px 14px 14px; position: relative; overflow: hidden;
+  }
+  .poster .top-brand {
+    display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 2.5px solid var(--ink);
+    border-radius: 999px; padding: 4px 13px 5px; font-size: 12px; font-weight: 900;
+    box-shadow: 3px 3px 0 var(--ink); margin-bottom: 40px; transform: rotate(-1.5deg);
+  }
+  .poster-title {
+    text-align: center; font-family: var(--font-title); font-size: 29px; color: var(--yellow);
+    line-height: 1.3; -webkit-text-stroke: 1.5px var(--ink); text-shadow: 3.5px 3.5px 0 var(--ink);
+    margin-bottom: 30px; letter-spacing: 2px;
+  }
+  .poster-quote {
+    background: #fff; border: var(--line); border-radius: 18px; box-shadow: 6px 6px 0 rgba(31,31,31,0.9);
+    padding: 20px 18px; text-align: center; margin-bottom: 20px; position: relative;
+  }
+  .poster-quote .q-mark { font-family: var(--font-comic); font-size: 30px; color: var(--red); line-height: 1; display: block; margin-bottom: 6px; }
+  .poster-quote .q-text { font-family: var(--font-strong); font-size: 18px; line-height: 1.6; }
+  .poster-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 22px; }
+  .poster-stats .stat-box { box-shadow: 4px 4px 0 rgba(31,31,31,0.9); background: rgba(255,255,255,0.95); }
+  .poster-foot {
+    background: #fff; border: var(--line); border-radius: 16px; box-shadow: 5px 5px 0 rgba(31,31,31,0.9);
+    padding: 11px 13px; display: flex; align-items: center; gap: 12px;
+  }
+  .qr-placeholder {
+    width: 64px; height: 64px; border: 2.5px solid var(--ink); border-radius: 10px; flex-shrink: 0; position: relative;
+    background: conic-gradient(from 90deg, var(--ink) 0 25%, #fff 25% 50%, var(--ink) 50% 75%, #fff 75% 100%);
+    background-size: 13px 13px;
+  }
+  .qr-placeholder::after { content: ""; position: absolute; inset: 19px; background: #fff; border: 2.5px solid var(--ink); border-radius: 4px; }
+  .poster-foot .t1 { font-size: 12.5px; font-weight: 900; }
+  .poster-foot .t2 { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .poster-mascot { position: absolute; right: -8px; top: 40px; width: 100px; height: 100px; transform: rotate(6deg); }
+  .poster-sfx {
+    position: absolute; left: 10px; top: 108px; font-family: var(--font-comic); font-size: 22px; color: #fff;
+    transform: rotate(-8deg); letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink);
+  }
+  .poster-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .action-btn {
+    padding: 13px 0; border: var(--line); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink);
+    font-family: var(--font-strong); font-weight: 900; font-size: 15px; text-align: center; letter-spacing: 0.5px;
+  }
+  .action-btn.save { background: var(--yellow); }
+  .action-btn.share { background: var(--red); color: #fff; }
+
+  /* ============ P14 错误页 ============ */
+  .error-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .error-stage .mascot-svg { width: 150px; height: 150px; margin-bottom: 6px; }
+  .error-title { font-family: var(--font-title); font-size: 26px; margin: 12px 0 6px; }
+  .error-desc { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 26px; line-height: 1.7; }
+  .error-code { font-family: var(--font-num); font-size: 11px; color: #b1a897; letter-spacing: 1px; margin-top: 18px; }
+
+  .mascot-svg { display: block; }
+
+  @media (max-width: 1240px) {
+    .screens-grid { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .screens-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======== 吉祥物 SVG symbols（复用） ======== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mascot" viewBox="0 0 140 140">
+    <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+      <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+      <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+      <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+    </g>
+    <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+    <line x1="55" y1="61" x2="64" y2="61" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="77" y1="61" x2="86" y2="61" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M62 72 q8 7 16 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="36" cy="103" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="104" cy="103" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="50" cy="70" r="4" fill="#FFB0A0"/>
+  </symbol>
+
+  <symbol id="mascot-happy" viewBox="0 0 140 140">
+    <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+      <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+      <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+      <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+    </g>
+    <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M54 63 q5 -7 10 0" fill="none" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M76 63 q5 -7 10 0" fill="none" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M58 71 a12 11 0 0 0 24 0 z" fill="#C25A4E" stroke="#1F1F1F" stroke-width="3.5" stroke-linejoin="round"/>
+    <circle cx="34" cy="92" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="106" cy="92" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <line x1="44" y1="78" x2="34" y2="94" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="96" y1="78" x2="106" y2="94" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="50" cy="70" r="4" fill="#FFB0A0"/>
+  </symbol>
+
+  <symbol id="mascot-dizzy" viewBox="0 0 140 140">
+    <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+      <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+      <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+      <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+    </g>
+    <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+    <line x1="54" y1="57" x2="64" y2="65" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="64" y1="57" x2="54" y2="65" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="76" y1="57" x2="86" y2="65" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="86" y1="57" x2="76" y2="65" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M60 74 q4 -4 8 0 q4 4 8 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="36" cy="106" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="104" cy="106" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <path d="M106 34 q6 9 0 13 q-7 -4 0 -13 z" fill="#4A9BFF" stroke="#1F1F1F" stroke-width="2.5" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="bone" viewBox="0 0 34 20">
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.5">
+      <circle cx="6" cy="6.5" r="3.6"/><circle cx="6" cy="13.5" r="3.6"/>
+      <circle cx="28" cy="6.5" r="3.6"/><circle cx="28" cy="13.5" r="3.6"/>
+      <rect x="6" y="7" width="22" height="6" rx="1.5"/>
+    </g>
+  </symbol>
+
+  <symbol id="boom-shape" viewBox="0 0 120 120">
+    <polygon fill="currentColor" stroke="#1F1F1F" stroke-width="4.5" stroke-linejoin="round"
+      points="60,4 76.5,25.8 103.7,25.1 97,51.5 114.6,72.4 89.7,83.7 84.4,110.4 60,98 35.7,110.5 30.3,83.7 5.4,72.5 23,51.5 16.2,25.1 43.5,25.8"/>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <header class="page-head">
+    <div class="kicker">FILE 01 · CORE FLOW</div>
+    <h1>核心流程原型 · <span class="hl">14 屏</span></h1>
+    <p class="sub">漫画闯关风 · 一行三列 · 响应式（手机屏 390px）</p>
+    <div class="flow">
+      <span>首页输入</span><span class="hot">题型配置 🆕</span><span>AI 生成中</span><span>答题（单选/多选/判断/填空）</span><span>对错反馈</span><span>连击奖励</span><span>通关结算</span><span>复盘报告</span><span>分享海报</span><span>异常兜底</span>
+    </div>
+  </header>
+
+  <div class="screens-grid">
+
+    <!-- ================ P01 首页 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="home-top">
+            <div class="logo-sticker"><span class="ai">AI</span> 闯关学习</div>
+            <div class="avatar-dot">我</div>
+          </div>
+          <div class="hero-card">
+            <div class="speech">嘿！今天想把什么<br>变成你的关卡？</div>
+            <div class="sfx-boom">SHUA!</div>
+            <div class="mascot-wrap">
+              <svg class="mascot-svg" width="118" height="118"><use href="#mascot"/></svg>
+            </div>
+          </div>
+          <div class="input-card">
+            <div class="ph">✏️ 输入一个知识点，比如：什么是 RAG？</div>
+            <div class="hint"><span class="mini-tag">提示</span>一句话 / 一段文字 / 一个主题都可以</div>
+          </div>
+          <div class="start-btn">⚡ 开始生成闯关！</div>
+          <div class="sec-flag">试试这些 👇</div>
+          <div class="chips">
+            <span class="chip">Python 入门</span>
+            <span class="chip">量子力学</span>
+            <span class="chip">法国大革命</span>
+            <span class="chip">剪辑技巧</span>
+          </div>
+          <div class="sec-flag">上次没打完的 👇</div>
+          <div class="recent-card">
+            <div>
+              <div class="t">RAG 入门 · 第 3/5 关</div>
+              <div class="s">上次正确率 80% · 错 1 题</div>
+            </div>
+            <span class="go">继续 →</span>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.01</span> <b>首页</b> · 输入主题，一键生成闯关</div>
+    </div>
+
+    <!-- ================ P02 题型配置弹层 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="home-top">
+            <div class="logo-sticker"><span class="ai">AI</span> 闯关学习</div>
+            <div class="avatar-dot">我</div>
+          </div>
+          <div class="hero-card">
+            <div class="speech">嘿！今天想把什么<br>变成你的关卡？</div>
+            <div class="sfx-boom">SHUA!</div>
+            <div class="mascot-wrap">
+              <svg class="mascot-svg" width="118" height="118"><use href="#mascot"/></svg>
+            </div>
+          </div>
+          <div class="input-card">
+            <div class="ph" style="color:var(--ink);font-weight:700;">✏️ 什么是 RAG？</div>
+          </div>
+
+          <div class="sheet-dim"></div>
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title">配置你的关卡</div>
+            <div class="sheet-sub">题型自由搭配，AI 按需出题</div>
+
+            <div class="sheet-label"><span class="dot"></span>搭配题型</div>
+            <div class="type-row">
+              <div class="type-chip on"><span class="box">✓</span>单选</div>
+              <div class="type-chip on"><span class="box">✓</span>多选</div>
+              <div class="type-chip on"><span class="box">✓</span>判断</div>
+              <div class="type-chip"><span class="box">✓</span>填空</div>
+            </div>
+
+            <div class="sheet-label"><span class="dot"></span>来几道？</div>
+            <div class="seg">
+              <span>3 题</span><span class="on">5 题</span><span>10 题</span>
+            </div>
+
+            <div class="sheet-label"><span class="dot"></span>难度口味</div>
+            <div class="seg">
+              <span>简单</span><span class="on">混合</span><span>困难</span>
+            </div>
+
+            <div class="sheet-cta">⚡ 开始生成！</div>
+            <div class="sheet-tip">已选 3 种题型 · 填空检验记忆，选择考验理解</div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.02</span> <b>题型配置</b> <span class="new">🆕</span> · 选择题型组合再出题</div>
+    </div>
+
+    <!-- ================ P03 生成中 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen dotbg">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="loading-stage">
+            <div class="detective-wrap">
+              <svg class="mascot-svg" width="150" height="150" style="position:absolute;left:0;bottom:0;"><use href="#mascot"/></svg>
+              <svg class="mag" width="84" height="84" viewBox="0 0 84 84">
+                <circle cx="36" cy="36" r="24" fill="rgba(255,255,255,0.75)" stroke="#1F1F1F" stroke-width="5"/>
+                <line x1="54" y1="54" x2="76" y2="76" stroke="#1F1F1F" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="28" cy="28" r="6" fill="#fff" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="bubble loading-bubble tail">侦探模式 ON！<br>正在替你翻遍全网找线索…</div>
+            <div class="steps">
+              <div class="step"><span class="st-ic">✓</span>搜集资料 · 锁定「RAG 入门」</div>
+              <div class="step"><span class="st-ic">✓</span>划重点 · 圈出 5 个核心知识</div>
+              <div class="step doing"><span class="st-ic">⟳</span>出题中 · 按你的题型搭配生成…</div>
+            </div>
+            <div class="prog-track" style="width:100%;"><div class="prog-fill" style="width:66%;"></div></div>
+            <div class="loading-foot" style="margin-top:14px;">别急，比等一碗泡面还快 🍜</div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.03</span> <b>生成中</b> · 侦探模式加载页</div>
+    </div>
+
+    <!-- ================ P04 单选题 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 1 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:20%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>0</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag">单选</span><span class="lv-tag">难度 · 中</span></div>
+            <div class="stem">RAG 主要解决大模型的<br>什么问题？</div>
+          </div>
+          <div class="opt-list">
+            <div class="opt"><span class="key">A</span>知识过时、容易“胡说”</div>
+            <div class="opt"><span class="key">B</span>推理速度太慢</div>
+            <div class="opt"><span class="key">C</span>绘画能力不足</div>
+            <div class="opt"><span class="key">D</span>不支持多轮对话</div>
+          </div>
+          <div class="quiz-foot-tip">🤔 选一个答案吧，答错也有讲解哦</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.04</span> <b>答题</b> · 单选题（未作答）</div>
+    </div>
+
+    <!-- ================ P05 多选题 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 2 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:40%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>20</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag" style="background:var(--red);">多选</span><span class="lv-tag">难度 · 中</span></div>
+            <div class="stem">下面哪些属于 RAG 的<br>典型应用场景？<span style="font-size:11.5px;color:var(--muted);">（选出全部正确项）</span></div>
+          </div>
+          <div class="opt-list">
+            <div class="opt selected"><span class="key sq">✓</span>企业私有知识问答</div>
+            <div class="opt selected"><span class="key sq">✓</span>客服机器人</div>
+            <div class="opt"><span class="key sq"></span>手机时钟界面</div>
+            <div class="opt"><span class="key sq"></span>论文库文献助手</div>
+          </div>
+          <div class="next-btn">确认答案（已选 2 项）</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.05</span> <b>答题</b> · 多选题（已选 2 项）</div>
+    </div>
+
+    <!-- ================ P06 判断题 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 3 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:60%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>45</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag" style="background:var(--green);">判断</span><span class="lv-tag">难度 · 易</span></div>
+            <div class="stem">判断题：RAG 的答案质量，<br>只取决于大模型本身。</div>
+          </div>
+          <div class="judge-row">
+            <div class="judge-btn yes"><span class="sym">✓</span>对</div>
+            <div class="judge-btn no"><span class="sym">✗</span>错</div>
+          </div>
+          <div class="judge-hint">觉得对就点「对」，觉得错就点「错」</div>
+          <div class="quiz-foot-tip" style="margin-top:auto;">💡 提示：想想 RAG 里的 R（Retrieval）在干嘛</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.06</span> <b>答题</b> · 判断题（对/错大按钮）</div>
+    </div>
+
+    <!-- ================ P07 填空题 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 4 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:80%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>45</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag" style="background:var(--orange);">填空</span><span class="lv-tag">难度 · 中</span></div>
+            <div class="stem">RAG 的核心流程是：<br>先「<span class="blank">?</span>」，再「生成答案」。</div>
+          </div>
+          <div class="fill-card">
+            <div class="fc-label"><span>✍️ 写下你的答案</span><span>限 10 字</span></div>
+            <div class="fill-line">检索<span class="caret"></span></div>
+          </div>
+          <div class="quiz-foot-tip" style="margin-top:auto;">💡 就填一个动词：RAG 第一步在干嘛？</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.07</span> <b>答题</b> · 填空题 <span class="new">🆕</span>（手写填空格）</div>
+    </div>
+
+    <!-- ================ P08 答对反馈 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 1 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:20%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>20</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag">单选</span><span class="lv-tag">难度 · 中</span></div>
+            <div class="stem">RAG 主要解决大模型的<br>什么问题？</div>
+          </div>
+          <div class="opt-list">
+            <div class="opt correct"><span class="key">A</span>知识过时、容易“胡说”<span class="badge-mini">✅</span></div>
+            <div class="opt"><span class="key">B</span>推理速度太慢</div>
+            <div class="opt"><span class="key">C</span>绘画能力不足</div>
+            <div class="opt"><span class="key">D</span>不支持多轮对话</div>
+          </div>
+          <div class="fb-card good">
+            <div class="stamp ok sm">√</div>
+            <div>
+              <div class="fb-text">叮！答对啦！</div>
+              <div class="fb-sub">+20 经验 · <b style="color:var(--red);">COMBO ×2 🔥</b></div>
+            </div>
+          </div>
+          <div class="explain" style="margin-bottom:8px;">
+            <div class="bubble tail" style="font-size:12.5px;">
+              大模型的知识停在训练那一天，RAG 帮它“翻最新资料”再答题，所以答案更准、更新。
+            </div>
+            <div><span class="kb-tag">🏷️ 知识点：大模型的两大痛点</span></div>
+          </div>
+          <div class="next-btn" style="margin-top:auto;">太棒了，下一题 →</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.08</span> <b>答对反馈</b> · 绿章 + 连击 + 讲解</div>
+    </div>
+
+    <!-- ================ P09 答错反馈（填空批改） ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 4 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:80%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>50</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag" style="background:var(--orange);">填空</span><span class="lv-tag">难度 · 中</span></div>
+            <div class="stem">RAG 的核心流程是：<br>先「<span class="blank" style="color:var(--green-deep);border-color:var(--green-deep);">检索</span>」，再「生成答案」。</div>
+          </div>
+          <div class="grade-box">
+            <div class="grade-row wrong"><span class="gtag" style="color:var(--red-deep);">你的答案</span><span class="ans">数据库</span><span style="margin-left:auto;font-size:16px;">❌</span></div>
+            <div class="grade-row right"><span class="gtag" style="color:var(--green-deep);">正确答案</span><span class="ans">检索</span><span style="margin-left:auto;font-size:16px;">✅</span></div>
+          </div>
+          <div class="fb-card">
+            <div class="stamp no sm">×</div>
+            <div>
+              <div class="fb-text">差一点点！</div>
+              <div class="fb-sub">安慰奖 +5 经验 · 错题已进错题本</div>
+            </div>
+          </div>
+          <div class="explain" style="margin-bottom:8px;">
+            <div class="bubble tail" style="font-size:12.5px;">
+              RAG 的第一步是「检索」——先去资料堆里翻，再把结果喂给模型生成。少了检索，就成了裸机大模型啦。
+            </div>
+            <div><span class="kb-tag">🏷️ 知识点：RAG 基本流程</span></div>
+          </div>
+          <div class="next-btn" style="margin-top:auto;">我懂了，下一题 →</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.09</span> <b>答错反馈</b> · 红章批改 + 正确答案对比</div>
+    </div>
+
+    <!-- ================ P10 连击奖励弹层 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="quiz-top">
+            <div class="back-btn">←</div>
+            <div class="quiz-prog">
+              <div class="txt"><span>第 3 关 / 共 5 关</span><span>RAG 入门</span></div>
+              <div class="prog-track" style="height:18px;"><div class="prog-fill" style="width:60%;"></div></div>
+            </div>
+            <span class="badge xp"><span class="ic">⚡</span>75</span>
+          </div>
+          <div class="q-card">
+            <div class="flags"><span class="type-tag" style="background:var(--green);">判断</span></div>
+            <div class="stem">判断题：RAG 的答案质量，<br>只取决于大模型本身。</div>
+          </div>
+          <div class="judge-row">
+            <div class="judge-btn yes" style="opacity:.45;">✓ 对</div>
+            <div class="judge-btn no" style="background:var(--green-soft);position:relative;">✗ 错
+              <span style="position:absolute;top:7px;right:9px;font-size:16px;">✅</span>
+            </div>
+          </div>
+
+          <div class="modal-dim"></div>
+          <div class="modal-center">
+            <div class="combo-stack">
+              <div class="boom-wrap lg" style="color:var(--yellow);">
+                <svg><use href="#boom-shape"/></svg>
+                <span class="boom-text">COMBO<br>×3！</span>
+              </div>
+              <div class="sub-stickers">
+                <span class="sub-sticker">⚡ 经验 +50</span>
+                <span class="sub-sticker">🪙 金币 +20</span>
+              </div>
+            </div>
+            <div class="modal-btn">手感来了，继续冲！→</div>
+            <div style="font-size:11.5px;color:#fff;font-weight:700;text-shadow:1px 1px 0 rgba(31,31,31,.8);">连续答对 3 题 · 别断啊朋友 🔥</div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.10</span> <b>连击奖励</b> · COMBO 弹层结算</div>
+    </div>
+
+    <!-- ================ P11 通关结算 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen dotbg">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div class="boom-wrap lg" style="color:var(--yellow);margin-bottom:10px;">
+              <svg><use href="#boom-shape"/></svg>
+              <span class="boom-text" style="font-size:24px;">闯关成功！</span>
+            </div>
+            <div class="stars">
+              <span class="star">★</span><span class="star">★</span><span class="star dim">★</span>
+            </div>
+            <div style="font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:16px;">距三星只差一点点！再刷对 1 题就满了</div>
+            <div class="result-stats" style="width:100%;">
+              <div class="stat-box"><div class="v green">80%</div><div class="k">正确率</div></div>
+              <div class="stat-box"><div class="v">+120</div><div class="k">总经验</div></div>
+              <div class="stat-box"><div class="v red">3:20</div><div class="k">用时</div></div>
+            </div>
+            <div style="width:100%;display:flex;align-items:center;gap:10px;border:2.5px dashed var(--ink);border-radius:13px;padding:10px 13px;background:var(--paper-2);font-size:12px;font-weight:700;text-align:left;">
+              <svg width="30" height="18" style="flex-shrink:0;"><use href="#bone"/></svg>
+              彩蛋：每通关一次，吉祥物就多一根骨头饼干 🍪
+            </div>
+          </div>
+          <div class="btn-col">
+            <div class="next-btn red" style="margin-top:0;">查看复盘报告 →</div>
+            <div class="next-btn">再来一关（换个主题）</div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.11</span> <b>通关结算</b> · 星级评价 + 数据卡</div>
+    </div>
+
+    <!-- ================ P12 复盘报告 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="report-head">
+            <div>
+              <div class="t1">RAG 入门 · 复盘报告</div>
+              <div class="t2">2026-09-30 · 共 5 题 · 用时 3 分 20 秒</div>
+            </div>
+            <div style="font-size:26px;">📋</div>
+          </div>
+
+          <div class="ring-wrap">
+            <div class="ring"><span class="val">80%</span></div>
+            <div class="ring-copy">
+              本关正确率 <b>80%</b><br>
+              击败了 <b>86%</b> 的闯关者<br>
+              <span style="color:var(--muted);font-size:11.5px;">连对最高 ×3 · 错 1 题</span>
+            </div>
+          </div>
+
+          <div class="sec-flag" style="margin-bottom:9px;">三句话总结这关 👇</div>
+          <div class="sum-list">
+            <div class="sum-item"><span class="n">01</span>RAG = 先检索、再生成，等于给大模型配了一本“实时参考书”。</div>
+            <div class="sum-item"><span class="n">02</span>它主攻两个痛点：知识过期、爱“胡说”（幻觉）。</div>
+            <div class="sum-item"><span class="n">03</span>常见场景：企业问答、智能客服、文献助手。</div>
+          </div>
+
+          <div class="point-grid">
+            <div class="point-card good">
+              <div class="pt">✅ 掌握较好</div>
+              <ul><li>RAG 的基本定义</li><li>检索 + 生成的流程</li></ul>
+            </div>
+            <div class="point-card bad">
+              <div class="pt">❌ 薄弱点</div>
+              <ul><li>应用场景辨析</li><li>易混入无关场景</li></ul>
+            </div>
+          </div>
+
+          <div class="advice-bar">💡 下一步：再来 1 关专练「应用场景」；错题本会在 3 天后喊你重温，别忘了它。</div>
+
+          <div class="next-btn red" style="margin-top:auto;">生成战报海报，去炫耀 →</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.12</span> <b>复盘报告</b> · 正确率 + 总结 + 薄弱点</div>
+    </div>
+
+    <!-- ================ P13 分享海报 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen" style="padding:10px; background:var(--ink);">
+          <div class="poster">
+            <span class="poster-sfx">BOOM!</span>
+            <div class="top-brand">🤖 AI 闯关学习 · 学习战报</div>
+            <div class="poster-mascot">
+              <svg class="mascot-svg" width="100" height="100"><use href="#mascot-happy"/></svg>
+            </div>
+            <div class="poster-title">今天我又<br>闯过一关！</div>
+            <div class="poster-quote">
+              <span class="q-mark">“</span>
+              <div class="q-text">把知识做成关卡，<br>记忆会更深。</div>
+            </div>
+            <div class="poster-stats">
+              <div class="stat-box"><div class="v red">80%</div><div class="k">正确率</div></div>
+              <div class="stat-box"><div class="v">+120</div><div class="k">XP 经验</div></div>
+              <div class="stat-box"><div class="v">×3</div><div class="k">最高连对</div></div>
+            </div>
+            <div class="poster-foot">
+              <div class="qr-placeholder"></div>
+              <div>
+                <div class="t1">长按扫码，来和我一起闯关</div>
+                <div class="t2">输入任何知识，AI 帮你出题</div>
+              </div>
+            </div>
+          </div>
+          <div class="poster-actions">
+            <div class="action-btn save">💾 保存到相册</div>
+            <div class="action-btn share">📤 分享给好友</div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.13</span> <b>分享海报</b> · 保存 / 转发操作栏</div>
+    </div>
+
+    <!-- ================ P14 生成失败 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="error-stage">
+            <svg class="mascot-svg" width="150" height="150"><use href="#mascot-dizzy"/></svg>
+            <div class="error-title">AI 卡壳了…</div>
+            <div class="error-desc">题目生成失败，可能是网络打了个盹 💤<br>别慌，重试一般就好</div>
+            <div style="width:100%;display:flex;flex-direction:column;gap:11px;">
+              <div class="next-btn red" style="margin-top:0;">🔄 重新生成</div>
+              <div class="next-btn">换个主题试试</div>
+            </div>
+            <div class="error-code">错误码：TIMEOUT_504</div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">P.14</span> <b>异常兜底</b> · 生成失败可重试</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

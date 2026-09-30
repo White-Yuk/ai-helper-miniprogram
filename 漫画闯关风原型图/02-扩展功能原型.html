@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 闯关学习 · 扩展功能原型（漫画闯关风）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --red: #E8432E; --red-deep: #C33722;
+    --yellow: #FFC93C; --yellow-soft: #FFE9AE;
+    --paper: #FFF6E3; --paper-2: #FFFDF6;
+    --ink: #1F1F1F;
+    --green: #3FA34D; --green-deep: #2E7D3A; --green-soft: #D8F0DC;
+    --blue: #4A9BFF;
+    --orange: #FF8A3D;
+    --muted: #6B6459;
+    --font-title: "ZCOOL KuaiLe", "ZCOOL QingKe HuangYou", "Yuanti SC", "Microsoft YaHei", sans-serif;
+    --font-strong: "ZCOOL QingKe HuangYou", "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif;
+    --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-comic: "Bangers", "ZCOOL KuaiLe", cursive;
+    --font-num: "Fredoka", "Arial Rounded MT Bold", "Noto Sans SC", sans-serif;
+    --line: 3px solid var(--ink);
+    --line-thin: 2.5px solid var(--ink);
+    --shadow: 6px 6px 0 var(--ink);
+    --shadow-sm: 4px 4px 0 var(--ink);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); color: var(--ink);
+    background-color: var(--paper);
+    background-image: radial-gradient(circle, rgba(31,31,31,0.075) 1.2px, transparent 1.3px);
+    background-size: 13px 13px;
+    line-height: 1.65; padding: 26px 20px 90px;
+  }
+  .wrap { max-width: 1420px; margin: 0 auto; }
+
+  .page-head { text-align: center; margin-bottom: 40px; }
+  .page-head .kicker {
+    display: inline-block; font-family: var(--font-comic); letter-spacing: 2px; font-size: 15px;
+    background: var(--ink); color: var(--yellow); padding: 3px 16px 5px; border-radius: 999px;
+    transform: rotate(-1.5deg); margin-bottom: 14px;
+  }
+  .page-head h1 { font-family: var(--font-title); font-size: clamp(28px, 4.5vw, 46px); letter-spacing: 1px; }
+  .page-head h1 .hl { color: var(--red); -webkit-text-stroke: 1.2px var(--ink); text-shadow: 3px 3px 0 var(--yellow); }
+  .page-head .sub { margin-top: 10px; color: var(--muted); font-size: 15px; font-weight: 500; }
+  .page-head .flow { display: inline-flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; font-size: 12.5px; font-weight: 700; }
+  .page-head .flow span { background: #fff; border: 2.5px solid var(--ink); border-radius: 999px; padding: 3px 12px 4px; box-shadow: 2.5px 2.5px 0 var(--ink); }
+  .page-head .flow span.hot { background: var(--yellow); }
+
+  .screens-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(300px, 1fr));
+    gap: 30px; align-items: start; overflow-x: auto; padding: 6px 4px 14px;
+  }
+  .screens-grid > div { min-width: 270px; }
+  .phone {
+    background: var(--paper-2); border: 4px solid var(--ink); border-radius: 38px;
+    box-shadow: 9px 9px 0 rgba(31,31,31,0.92); padding: 11px; position: relative;
+  }
+  .phone::before {
+    content: ""; position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+    width: 96px; height: 18px; background: var(--ink); border-radius: 999px; z-index: 6;
+  }
+  .screen {
+    border: var(--line-thin); border-radius: 28px; background: var(--paper);
+    min-height: 800px; padding: 16px 14px 18px; overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .screen-label { text-align: center; margin-top: 14px; font-family: var(--font-strong); font-size: 15px; letter-spacing: 0.5px; }
+  .screen-label b { color: var(--red); }
+  .screen-label .no { font-family: var(--font-comic); letter-spacing: 1px; color: var(--muted); }
+  .screen-label .new { color: var(--blue); font-weight: 900; }
+  .statusbar { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--muted); padding: 4px 8px 12px; flex-shrink: 0; }
+
+  .sec-flag { display: inline-block; font-size: 12.5px; font-weight: 900; margin: 2px 0 9px; padding: 1px 4px; background: linear-gradient(transparent 55%, var(--yellow) 55%, var(--yellow) 92%, transparent 92%); }
+  .mb { margin-bottom: 15px; }
+  .card { background: var(--paper-2); border: var(--line); border-radius: 16px; box-shadow: var(--shadow-sm); }
+  .next-btn {
+    margin-top: auto; width: 100%; font-family: var(--font-strong); font-size: 16.5px; letter-spacing: 1px;
+    color: var(--ink); background: var(--yellow); border: var(--line); border-radius: 16px; padding: 13px 0 14px;
+    box-shadow: var(--shadow-sm); text-align: center; font-weight: 900;
+  }
+  .next-btn.red { background: var(--red); color: #fff; }
+  .chip-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    font-size: 12px; font-weight: 700; border: 2.5px solid var(--ink); border-radius: 999px;
+    background: #fff; padding: 4px 13px 5px; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .chip.on { background: var(--yellow); }
+  .bar-track { height: 14px; border: 2.5px solid var(--ink); border-radius: 999px; background: #fff; padding: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; background: var(--yellow); }
+  .bar-fill.green { background: var(--green); }
+  .bar-fill.red { background: var(--red); }
+
+  /* ===== E01 个人中心 ===== */
+  .profile-head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+  .avatar-lg {
+    width: 72px; height: 72px; border: var(--line); border-radius: 50%; background: var(--yellow);
+    box-shadow: var(--shadow-sm); display: grid; place-items: center; flex-shrink: 0; overflow: hidden;
+  }
+  .profile-info .name { font-family: var(--font-title); font-size: 21px; display: flex; align-items: center; gap: 8px; }
+  .lv-badge {
+    font-family: var(--font-comic); font-size: 12px; background: var(--red); color: #fff;
+    border: 2.5px solid var(--ink); border-radius: 999px; padding: 1px 10px 3px; letter-spacing: 1px; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .profile-info .desc { font-size: 11.5px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .xp-card { border: var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-sm); padding: 12px 14px; margin-bottom: 14px; }
+  .xp-card .row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 900; margin-bottom: 7px; }
+  .xp-card .row span:last-child { font-family: var(--font-num); color: var(--red); }
+  .stat3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 14px; }
+  .stat-box { border: var(--line); border-radius: 14px; background: #fff; box-shadow: 3.5px 3.5px 0 var(--ink); padding: 10px 4px 9px; text-align: center; }
+  .stat-box .v { font-family: var(--font-num); font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .stat-box .v.red { color: var(--red); } .stat-box .v.green { color: var(--green-deep); }
+  .stat-box .k { font-size: 10.5px; font-weight: 900; color: var(--muted); margin-top: 2px; }
+  .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-bottom: 14px; }
+  .menu-item {
+    border: 2.5px solid var(--ink); border-radius: 14px; background: #fff; box-shadow: 3px 3px 0 var(--ink);
+    padding: 11px 2px 9px; text-align: center; position: relative;
+  }
+  .menu-item .mi { font-size: 22px; line-height: 1.2; }
+  .menu-item .mt { font-size: 10.5px; font-weight: 900; margin-top: 5px; }
+  .menu-item .dot-badge {
+    position: absolute; top: -8px; right: -6px; background: var(--red); color: #fff; font-size: 10px; font-weight: 900;
+    border: 2px solid var(--ink); border-radius: 999px; padding: 0 6px 1px;
+  }
+  .continue-card {
+    border: var(--line); border-radius: 14px; background: var(--yellow); box-shadow: var(--shadow-sm);
+    padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    background-image: radial-gradient(circle, rgba(31,31,31,0.12) 1.3px, transparent 1.4px); background-size: 9px 9px;
+  }
+  .continue-card .t { font-size: 13px; font-weight: 900; }
+  .continue-card .s { font-size: 11px; color: rgba(31,31,31,0.7); font-weight: 700; margin-top: 2px; }
+  .continue-card .go { font-family: var(--font-strong); font-size: 12.5px; background: var(--red); color: #fff; border: 2.5px solid var(--ink); border-radius: 999px; padding: 4px 11px 5px; white-space: nowrap; box-shadow: 2.5px 2.5px 0 var(--ink); }
+
+  /* ===== E02 知识库列表 ===== */
+  .lib-card { border: var(--line); border-radius: 15px; background: #fff; box-shadow: var(--shadow-sm); padding: 12px 14px; margin-bottom: 12px; }
+  .lib-card .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .lib-card .name { font-size: 14px; font-weight: 900; }
+  .lib-card .state {
+    font-size: 10.5px; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px; padding: 1px 9px 2px;
+  }
+  .state.done { background: var(--green-soft); color: var(--green-deep); }
+  .state.doing { background: var(--yellow); }
+  .lib-card .meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 7px; }
+  .lib-card .acc { font-family: var(--font-num); }
+
+  /* ===== E03 图表页 ===== */
+  .chart-card { border: var(--line); border-radius: 15px; background: #fff; box-shadow: var(--shadow-sm); padding: 13px 14px; margin-bottom: 13px; }
+  .chart-card .ct { font-size: 13px; font-weight: 900; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .chart-card .ct .v { font-family: var(--font-num); font-size: 16px; color: var(--red); }
+  .line-chart { width: 100%; display: block; }
+  .hbar-row { display: grid; grid-template-columns: 52px 1fr 40px; gap: 8px; align-items: center; margin-bottom: 9px; }
+  .hbar-row:last-child { margin-bottom: 0; }
+  .hbar-row .lbl { font-size: 11.5px; font-weight: 900; }
+  .hbar-row .val { font-family: var(--font-num); font-size: 12.5px; text-align: right; font-weight: 700; }
+  .days-row { display: flex; gap: 7px; justify-content: space-between; }
+  .day-dot {
+    flex: 1; aspect-ratio: 1/1.15; border: 2.5px solid var(--ink); border-radius: 9px; background: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900; color: var(--muted); box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .day-dot .d { font-size: 10px; }
+  .day-dot .s { font-size: 13px; }
+  .day-dot.ok { background: var(--yellow); color: var(--ink); }
+  .day-dot.today { background: var(--red); color: #fff; }
+
+  /* ===== E04 知识详情 ===== */
+  .master-head { display: flex; align-items: center; gap: 14px; margin-bottom: 15px; }
+  .ring-sm {
+    width: 92px; height: 92px; border-radius: 50%; position: relative; flex-shrink: 0;
+    background: conic-gradient(var(--green) 0 274deg, #EAE2D4 274deg 360deg);
+    border: 3px solid var(--ink); box-shadow: 3.5px 3.5px 0 var(--ink);
+  }
+  .ring-sm::before { content: ""; position: absolute; inset: 13px; background: var(--paper-2); border-radius: 50%; border: 3px solid var(--ink); }
+  .ring-sm .val { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-num); font-size: 21px; font-weight: 700; z-index: 1; }
+  .master-head .info .t { font-family: var(--font-title); font-size: 19px; }
+  .master-head .info .s { font-size: 11.5px; color: var(--muted); font-weight: 700; margin-top: 3px; }
+  .kp-row { display: flex; align-items: center; gap: 10px; border: 2.5px solid var(--ink); border-radius: 12px; background: #fff; box-shadow: 3px 3px 0 var(--ink); padding: 10px 12px; margin-bottom: 10px; }
+  .kp-row .kp-name { font-size: 12.5px; font-weight: 900; flex: 1; }
+  .kp-row .kp-bar { width: 76px; }
+  .kp-state { font-size: 10.5px; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px; padding: 1px 8px 2px; flex-shrink: 0; }
+  .kp-state.ok { background: var(--green-soft); color: var(--green-deep); }
+  .kp-state.warn { background: #FADBD5; color: var(--red-deep); }
+  .kp-state.none { background: #fff; color: var(--muted); }
+
+  /* ===== E05 错题本 ===== */
+  .group-flag {
+    display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 900; margin: 4px 0 10px;
+  }
+  .group-flag .gf-dot { width: 10px; height: 10px; border: 2px solid var(--ink); border-radius: 50%; background: var(--red); }
+  .group-flag .gf-dot.gray { background: #cfc7b8; }
+  .wrong-card { border: var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-sm); padding: 11px 13px; margin-bottom: 11px; }
+  .wrong-card .wc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .wc-tag { font-size: 10.5px; font-weight: 900; background: var(--yellow-soft); border: 2px solid var(--ink); border-radius: 999px; padding: 1px 8px 2px; }
+  .wc-count { font-family: var(--font-num); font-size: 11.5px; color: var(--red); font-weight: 700; }
+  .wrong-card .wc-stem { font-size: 12.5px; font-weight: 700; line-height: 1.6; margin-bottom: 8px; color: #3a3a3a; }
+  .wrong-card .wc-foot { display: flex; justify-content: space-between; align-items: center; }
+  .wc-due { font-size: 11px; font-weight: 900; padding: 2px 9px 3px; border-radius: 999px; border: 2px solid var(--ink); }
+  .wc-due.now { background: #FADBD5; color: var(--red-deep); }
+  .wc-due.soon { background: #fff; color: var(--muted); }
+  .wc-btn { font-family: var(--font-strong); font-size: 12px; background: var(--yellow); border: 2.5px solid var(--ink); border-radius: 999px; padding: 3px 12px 4px; box-shadow: 2.5px 2.5px 0 var(--ink); }
+
+  /* ===== E06 错题重做 ===== */
+  .redo-tag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 900;
+    background: var(--red); color: #fff; border: 2.5px solid var(--ink); border-radius: 999px;
+    padding: 2px 11px 3px; box-shadow: 2.5px 2.5px 0 var(--ink); margin-bottom: 10px; transform: rotate(-1deg);
+  }
+  .q-card { border: var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm); padding: 14px 15px; margin-bottom: 13px; }
+  .q-card .flags { display: flex; gap: 7px; margin-bottom: 10px; }
+  .q-card .type-tag { font-size: 11px; font-weight: 900; background: var(--orange); color: #fff; border: 2px solid var(--ink); border-radius: 7px; padding: 1px 9px 2px; }
+  .q-card .stem { font-size: 15px; font-weight: 900; line-height: 1.62; }
+  .q-card .stem .blank { display: inline-block; min-width: 62px; border-bottom: 3px dashed var(--red); color: var(--red); text-align: center; font-family: var(--font-title); line-height: 1.1; }
+  .fill-card { border: var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-sm); padding: 14px; margin-bottom: 14px; }
+  .fill-card .fc-label { font-size: 11.5px; font-weight: 900; color: var(--muted); margin-bottom: 8px; }
+  .fill-line { font-family: var(--font-title); font-size: 24px; letter-spacing: 4px; }
+  .caret { display: inline-block; width: 3px; height: 21px; background: var(--ink); vertical-align: middle; margin-left: 2px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .progress-chip {
+    display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 900; color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  /* ===== E07 复习提醒 ===== */
+  .review-hero {
+    border: var(--line); border-radius: 18px; background: var(--yellow); box-shadow: var(--shadow-sm);
+    padding: 16px 15px; position: relative; margin-bottom: 14px;
+    background-image: radial-gradient(circle, rgba(31,31,31,0.13) 1.4px, transparent 1.5px); background-size: 9px 9px;
+    overflow: hidden;
+  }
+  .review-hero .rh-title { font-family: var(--font-title); font-size: 24px; line-height: 1.25; }
+  .review-hero .rh-sub { font-size: 12px; font-weight: 700; color: rgba(31,31,31,0.75); margin-top: 5px; }
+  .review-hero .rh-mascot { position: absolute; right: 8px; bottom: 6px; width: 92px; height: 92px; }
+  .timeline { display: flex; align-items: center; gap: 0; margin: 16px 0 14px; }
+  .tl-node { flex: 1; text-align: center; position: relative; }
+  .tl-node .tl-dot {
+    width: 34px; height: 34px; margin: 0 auto 6px; border: 3px solid var(--ink); border-radius: 50%;
+    display: grid; place-items: center; font-size: 14px; font-weight: 900; background: #fff; box-shadow: 2.5px 2.5px 0 var(--ink); position: relative; z-index: 1;
+  }
+  .tl-node.done .tl-dot { background: var(--green-soft); }
+  .tl-node.now .tl-dot { background: var(--red); color: #fff; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.12); } }
+  .tl-node .tl-label { font-size: 10.5px; font-weight: 900; color: var(--muted); }
+  .tl-node.now .tl-label { color: var(--red); }
+  .tl-line { flex: 0 0 34px; height: 3.5px; background: var(--ink); border-radius: 2px; margin: 0 -4px 24px; }
+  .mini-wrong {
+    display: flex; align-items: center; gap: 9px; border: 2.5px solid var(--ink); border-radius: 11px;
+    background: #fff; padding: 8px 11px; font-size: 11.5px; font-weight: 700; margin-bottom: 8px; box-shadow: 2.5px 2.5px 0 var(--ink);
+  }
+  .mini-wrong .mw-ic {
+    width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 6px; background: var(--yellow-soft);
+    display: grid; place-items: center; font-size: 11px; flex-shrink: 0;
+  }
+
+  /* ===== E08 错题毕业 ===== */
+  .certificate {
+    border: var(--line); border-radius: 16px; background: var(--paper-2); box-shadow: var(--shadow-sm);
+    padding: 22px 18px 18px; text-align: center; position: relative; margin-bottom: 14px;
+    background-image: radial-gradient(circle, rgba(232,67,46,0.06) 1.4px, transparent 1.5px); background-size: 10px 10px;
+  }
+  .certificate::after {
+    content: ""; position: absolute; inset: 9px; border: 2.5px dashed #c9bda8; border-radius: 10px; pointer-events: none;
+  }
+  .certificate .c-title { font-family: var(--font-title); font-size: 23px; letter-spacing: 3px; }
+  .certificate .c-line { width: 60px; height: 3px; background: var(--red); margin: 9px auto; border-radius: 2px; }
+  .certificate .c-body { font-size: 12.5px; font-weight: 600; line-height: 1.85; color: #3a3a3a; }
+  .certificate .c-body b { color: var(--red); }
+  .certificate .c-stamp {
+    position: absolute; right: 18px; bottom: 16px; width: 74px; height: 74px; border: 4px solid var(--red-deep);
+    border-radius: 50%; display: grid; place-items: center; color: var(--red-deep); font-family: var(--font-title);
+    font-size: 15px; font-weight: 900; transform: rotate(-14deg); opacity: 0.92; line-height: 1.15; text-align: center;
+  }
+  .certificate .c-stamp::after { content: ""; position: absolute; inset: 5px; border: 2px dashed var(--red-deep); border-radius: 50%; opacity: 0.5; }
+
+  /* ===== E09 空状态 ===== */
+  .empty-card {
+    border: var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-sm);
+    padding: 18px 16px; text-align: center; margin-bottom: 14px;
+  }
+  .empty-card .mascot-svg { width: 108px; height: 108px; }
+  .empty-card .et { font-family: var(--font-title); font-size: 19px; margin: 6px 0 4px; }
+  .empty-card .ed { font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.7; margin-bottom: 12px; }
+  .empty-card .eb {
+    display: inline-block; font-family: var(--font-strong); font-size: 13.5px; background: var(--yellow);
+    border: 2.5px solid var(--ink); border-radius: 999px; padding: 6px 20px 7px; box-shadow: 3px 3px 0 var(--ink); font-weight: 900;
+  }
+  .empty-mini {
+    border: 2.5px dashed #c9c0b2; border-radius: 14px; padding: 13px 15px; text-align: left;
+    display: flex; gap: 11px; align-items: center; background: rgba(255,253,246,0.7);
+  }
+  .empty-mini .em-ic { font-size: 26px; }
+  .empty-mini .em-t { font-size: 13px; font-weight: 900; }
+  .empty-mini .em-d { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+  .mascot-svg { display: block; }
+  .mono-num { font-family: var(--font-num); font-weight: 700; }
+
+  @media (max-width: 1240px) { .screens-grid { grid-template-columns: repeat(2, minmax(300px, 1fr)); } }
+  @media (max-width: 860px) { .screens-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mascot" viewBox="0 0 140 140">
+    <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+      <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+      <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+      <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+    </g>
+    <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+    <line x1="55" y1="61" x2="64" y2="61" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="77" y1="61" x2="86" y2="61" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M62 72 q8 7 16 0" fill="none" stroke="#1F1F1F" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="36" cy="103" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="104" cy="103" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="50" cy="70" r="4" fill="#FFB0A0"/>
+  </symbol>
+  <symbol id="mascot-happy" viewBox="0 0 140 140">
+    <rect x="40" y="88" width="60" height="42" rx="13" fill="#FFC93C" stroke="#1F1F1F" stroke-width="4"/>
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.6">
+      <circle cx="61" cy="106" r="4.2"/><circle cx="61" cy="113" r="4.2"/>
+      <circle cx="79" cy="106" r="4.2"/><circle cx="79" cy="113" r="4.2"/>
+      <rect x="61" y="106.5" width="18" height="6" rx="1.5"/>
+    </g>
+    <circle cx="70" cy="60" r="35" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <path d="M35 58 a35 35 0 0 1 70 0 q-4 -9 -11 -5 q-5 3 -9 0.5 q-4 -2.5 -8 0 q-5 3 -9 0.5 q-5 -2.5 -9 0 q-5 3 -9 0.5 q-7 -4 -15 4.5 z" fill="#2B2B2B" stroke="#1F1F1F" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M54 63 q5 -7 10 0" fill="none" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M76 63 q5 -7 10 0" fill="none" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <path d="M58 71 a12 11 0 0 0 24 0 z" fill="#C25A4E" stroke="#1F1F1F" stroke-width="3.5" stroke-linejoin="round"/>
+    <circle cx="34" cy="92" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <circle cx="106" cy="92" r="8" fill="#FFE3C9" stroke="#1F1F1F" stroke-width="4"/>
+    <line x1="44" y1="78" x2="34" y2="94" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <line x1="96" y1="78" x2="106" y2="94" stroke="#1F1F1F" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="50" cy="70" r="4" fill="#FFB0A0"/>
+  </symbol>
+  <symbol id="bone" viewBox="0 0 34 20">
+    <g fill="#fff" stroke="#1F1F1F" stroke-width="2.5">
+      <circle cx="6" cy="6.5" r="3.6"/><circle cx="6" cy="13.5" r="3.6"/>
+      <circle cx="28" cy="6.5" r="3.6"/><circle cx="28" cy="13.5" r="3.6"/>
+      <rect x="6" y="7" width="22" height="6" rx="1.5"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <header class="page-head">
+    <div class="kicker">FILE 02 · EXTENDED</div>
+    <h1>扩展功能原型 · <span class="hl">9 屏</span></h1>
+    <p class="sub">个人中心 + 数据报表 + 错题本 + 遗忘曲线复习（按确认的范围制作）</p>
+    <div class="flow">
+      <span>个人中心</span><span>我的知识库</span><span>学习报表</span><span>知识掌握详情</span><span class="hot">错题本</span><span>错题重做</span><span class="hot">旧识重温</span><span>错题毕业</span><span>空状态彩蛋</span>
+    </div>
+  </header>
+
+  <div class="screens-grid">
+
+    <!-- ================ E01 个人中心 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="profile-head">
+            <div class="avatar-lg">
+              <svg class="mascot-svg" width="78" height="78" style="margin-top:12px;"><use href="#mascot"/></svg>
+            </div>
+            <div class="profile-info">
+              <div class="name">小衰学习家 <span class="lv-badge">LV.3</span></div>
+              <div class="desc">等级称号：闯关达人 · 已闯 12 关</div>
+            </div>
+          </div>
+
+          <div class="xp-card">
+            <div class="row"><span>距离「学霸预备役」还差…</span><span>260 / 400 XP</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:65%;"></div></div>
+          </div>
+
+          <div class="stat3">
+            <div class="stat-box"><div class="v red">5 天</div><div class="k">连续打卡</div></div>
+            <div class="stat-box"><div class="v">42</div><div class="k">累计答题</div></div>
+            <div class="stat-box"><div class="v green">78%</div><div class="k">平均正确率</div></div>
+          </div>
+
+          <div class="sec-flag">我的工具箱 👇</div>
+          <div class="menu-grid">
+            <div class="menu-item"><div class="mi">📚</div><div class="mt">知识库</div></div>
+            <div class="menu-item"><div class="mi">📕</div><div class="mt">错题本</div><span class="dot-badge">3</span></div>
+            <div class="menu-item"><div class="mi">📊</div><div class="mt">学习报表</div></div>
+            <div class="menu-item"><div class="mi">⚙️</div><div class="mt">设置</div></div>
+          </div>
+
+          <div class="continue-card" style="margin-top:auto;">
+            <div>
+              <div class="t">上次学到：RAG 入门 · 第 3/5 关</div>
+              <div class="s">错 1 题待复盘 · 别让它跑了</div>
+            </div>
+            <span class="go">继续 →</span>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.01</span> <b>个人中心</b> · 等级 / 数据概览 / 工具箱</div>
+    </div>
+
+    <!-- ================ E02 我的知识库 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="chip-row">
+            <span class="chip on">全部</span><span class="chip">学习中</span><span class="chip">已完成</span>
+          </div>
+
+          <div class="lib-card">
+            <div class="top"><span class="name">RAG 入门</span><span class="state done">已完成 ✓</span></div>
+            <div class="meta"><span>5/5 题 · 09-30</span><span class="acc">正确率 80%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:80%;"></div></div>
+          </div>
+
+          <div class="lib-card">
+            <div class="top"><span class="name">Python 基础语法</span><span class="state doing">学习中</span></div>
+            <div class="meta"><span>2/10 题 · 09-29</span><span class="acc">正确率 65%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:20%;"></div></div>
+          </div>
+
+          <div class="lib-card">
+            <div class="top"><span class="name">法国大革命</span><span class="state doing">学习中</span></div>
+            <div class="meta"><span>4/5 题 · 09-28</span><span class="acc">正确率 75%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:80%;"></div></div>
+          </div>
+
+          <div class="lib-card" style="border-style:dashed;opacity:.78;">
+            <div class="top"><span class="name">量子力学</span><span class="state" style="background:#fff;color:var(--muted);">新</span></div>
+            <div class="meta"><span>0/5 题 · 还没开始</span><span class="acc">去闯第一关 →</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;"></div></div>
+          </div>
+
+          <div class="next-btn" style="margin-top:auto;">+ 学点新的（输入新主题）</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.02</span> <b>我的知识库</b> · 历史闯关记录</div>
+    </div>
+
+    <!-- ================ E03 学习报表 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="chip-row">
+            <span class="chip on">本周</span><span class="chip">本月</span><span class="chip">全部</span>
+          </div>
+
+          <div class="chart-card">
+            <div class="ct">正确率趋势 <span class="v">↗ 80%</span></div>
+            <svg class="line-chart" viewBox="0 0 300 116">
+              <line x1="0" y1="26" x2="300" y2="26" stroke="#E5DCCB" stroke-width="2" stroke-dasharray="6 6"/>
+              <line x1="0" y1="58" x2="300" y2="58" stroke="#E5DCCB" stroke-width="2" stroke-dasharray="6 6"/>
+              <line x1="0" y1="90" x2="300" y2="90" stroke="#E5DCCB" stroke-width="2" stroke-dasharray="6 6"/>
+              <polyline points="20,74 64,90 108,58 152,50 196,66 240,34 284,42" fill="none" stroke="#E8432E" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <g fill="#FFC93C" stroke="#1F1F1F" stroke-width="3">
+                <circle cx="20" cy="74" r="5"/><circle cx="64" cy="90" r="5"/><circle cx="108" cy="58" r="5"/>
+                <circle cx="152" cy="50" r="5"/><circle cx="196" cy="66" r="5"/><circle cx="240" cy="34" r="5"/><circle cx="284" cy="42" r="5"/>
+              </g>
+            </svg>
+            <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:900;color:var(--muted);padding:0 4px;">
+              <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="ct">各领域掌握度</div>
+            <div class="hbar-row"><span class="lbl">RAG</span><div class="bar-track"><div class="bar-fill green" style="width:80%;"></div></div><span class="val">80%</span></div>
+            <div class="hbar-row"><span class="lbl">Python</span><div class="bar-track"><div class="bar-fill" style="width:65%;"></div></div><span class="val">65%</span></div>
+            <div class="hbar-row"><span class="lbl">历史</span><div class="bar-track"><div class="bar-fill red" style="width:40%;"></div></div><span class="val">40%</span></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="ct">本周打卡 <span class="v">5/7 天</span></div>
+            <div class="days-row">
+              <div class="day-dot ok"><span class="d">一</span><span class="s">✓</span></div>
+              <div class="day-dot ok"><span class="d">二</span><span class="s">✓</span></div>
+              <div class="day-dot ok"><span class="d">三</span><span class="s">✓</span></div>
+              <div class="day-dot ok"><span class="d">四</span><span class="s">✓</span></div>
+              <div class="day-dot today"><span class="d">五</span><span class="s">🔥</span></div>
+              <div class="day-dot"><span class="d">六</span><span class="s">·</span></div>
+              <div class="day-dot"><span class="d">日</span><span class="s">·</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.03</span> <b>学习报表</b> · 趋势 / 领域 / 打卡</div>
+    </div>
+
+    <!-- ================ E04 知识掌握详情 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="master-head">
+            <div class="ring-sm"><span class="val">76%</span></div>
+            <div class="info">
+              <div class="t">RAG 入门</div>
+              <div class="s">共 4 个知识点 · 已掌握 2 个<br>薄弱 1 个 · 未学 1 个</div>
+            </div>
+          </div>
+
+          <div class="sec-flag">知识点掌握明细 👇</div>
+          <div class="kp-row">
+            <span class="kp-name">RAG 基本流程</span>
+            <div class="kp-bar"><div class="bar-track"><div class="bar-fill green" style="width:100%;"></div></div></div>
+            <span class="kp-state ok">掌握</span>
+          </div>
+          <div class="kp-row">
+            <span class="kp-name">大模型的两大痛点</span>
+            <div class="kp-bar"><div class="bar-track"><div class="bar-fill green" style="width:85%;"></div></div></div>
+            <span class="kp-state ok">掌握</span>
+          </div>
+          <div class="kp-row">
+            <span class="kp-name">应用场景辨析</span>
+            <div class="kp-bar"><div class="bar-track"><div class="bar-fill red" style="width:35%;"></div></div></div>
+            <span class="kp-state warn">薄弱</span>
+          </div>
+          <div class="kp-row" style="opacity:.75;">
+            <span class="kp-name">与微调的区别</span>
+            <div class="kp-bar"><div class="bar-track"><div class="bar-fill" style="width:0%;"></div></div></div>
+            <span class="kp-state none">未学</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;border:2.5px dashed var(--ink);border-radius:13px;padding:10px 13px;background:var(--yellow-soft);font-size:12px;font-weight:700;margin-top:6px;">
+            💡 薄弱点会自动成错题重练，别担心漏掉
+          </div>
+
+          <div class="next-btn red" style="margin-top:auto;">再来一关，专练薄弱点 →</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.04</span> <b>知识详情</b> · 知识点掌握清单</div>
+    </div>
+
+    <!-- ================ E05 错题本 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-family:var(--font-title);font-size:20px;">我的错题本</div>
+            <span class="chip" style="box-shadow:none;">共 3 道待清理</span>
+          </div>
+
+          <div class="group-flag"><span class="gf-dot"></span>今天该复习（艾宾浩斯第 3 天）</div>
+
+          <div class="wrong-card">
+            <div class="wc-top"><span class="wc-tag">RAG 基本流程</span><span class="wc-count">错 2 次</span></div>
+            <div class="wc-stem">RAG 的核心流程是：先「＿＿」，再「生成答案」。</div>
+            <div class="wc-foot"><span class="wc-due now">⏰ 今天到期</span><span class="wc-btn">重做 →</span></div>
+          </div>
+
+          <div class="wrong-card">
+            <div class="wc-top"><span class="wc-tag">应用场景辨析</span><span class="wc-count">错 1 次</span></div>
+            <div class="wc-stem">下面哪些属于 RAG 的典型应用场景？（多选题）</div>
+            <div class="wc-foot"><span class="wc-due now">⏰ 今天到期</span><span class="wc-btn">重做 →</span></div>
+          </div>
+
+          <div class="wrong-card">
+            <div class="wc-top"><span class="wc-tag">大模型的两大痛点</span><span class="wc-count">错 1 次</span></div>
+            <div class="wc-stem">RAG 主要解决大模型的什么问题？</div>
+            <div class="wc-foot"><span class="wc-due now">⏰ 今天到期</span><span class="wc-btn">重做 →</span></div>
+          </div>
+
+          <div class="group-flag" style="margin-top:6px;"><span class="gf-dot gray"></span>还在冷却期（过两天再来）</div>
+          <div class="wrong-card" style="opacity:.72;">
+            <div class="wc-top"><span class="wc-tag">Python 循环</span><span class="wc-count">错 1 次</span></div>
+            <div class="wc-stem">for 循环里 continue 和 break 的区别是什么？</div>
+            <div class="wc-foot"><span class="wc-due soon">🗓 2 天后到期</span><span class="wc-btn">重做 →</span></div>
+          </div>
+
+          <div class="next-btn red" style="margin-top:auto;">开始清理今天的错题（3）→</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.05</span> <b>错题本</b> · 按到期状态分组</div>
+    </div>
+
+    <!-- ================ E06 错题重做 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="redo-tag">♻️ 错题重做 · 第 1 / 3 道</div>
+          <div class="progress-chip"><span>今日清理进度</span><span>1 / 3</span></div>
+          <div class="bar-track" style="margin-bottom:15px;"><div class="bar-fill red" style="width:33%;"></div></div>
+
+          <div class="q-card">
+            <div class="flags"><span class="type-tag">填空</span></div>
+            <div class="stem">RAG 的核心流程是：<br>先「<span class="blank">?</span>」，再「生成答案」。</div>
+          </div>
+
+          <div class="fill-card">
+            <div class="fc-label">✍️ 再写一次，这次肯定行</div>
+            <div class="fill-line">检<span class="caret"></span></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;border:2.5px dashed var(--ink);border-radius:13px;padding:10px 13px;background:#FDF1EE;font-size:12px;font-weight:700;">
+            ⚠️ 上次你填的是「数据库」—— 再想想第一步在干嘛？
+          </div>
+
+          <div class="next-btn" style="margin-top:auto;">确认答案</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.06</span> <b>错题重做</b> · 带上次错误提示</div>
+    </div>
+
+    <!-- ================ E07 复习提醒 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+          <div class="review-hero">
+            <div class="rh-title">旧识重温<br>宝藏关卡已备好！</div>
+            <div class="rh-sub">3 道错题到了最佳重温时间<br>（遗忘曲线：第 3 天）</div>
+            <div class="rh-mascot">
+              <svg class="mascot-svg" width="92" height="92"><use href="#mascot-happy"/></svg>
+            </div>
+          </div>
+
+          <div class="timeline">
+            <div class="tl-node done"><div class="tl-dot">✓</div><div class="tl-label">第 1 天</div></div>
+            <div class="tl-line"></div>
+            <div class="tl-node now"><div class="tl-dot">3</div><div class="tl-label">第 3 天（今天）</div></div>
+            <div class="tl-line"></div>
+            <div class="tl-node"><div class="tl-dot">🗓</div><div class="tl-label">第 7 天</div></div>
+          </div>
+
+          <div class="sec-flag">这次要重温的内容 👇</div>
+          <div class="mini-wrong"><span class="mw-ic">📝</span>RAG 的核心流程是：先「？」再生成…</div>
+          <div class="mini-wrong"><span class="mw-ic">📝</span>下面哪些属于 RAG 的典型应用场景？</div>
+          <div class="mini-wrong"><span class="mw-ic">📝</span>RAG 主要解决大模型的什么问题？</div>
+
+          <div style="display:flex;align-items:center;gap:9px;border:2.5px solid var(--ink);border-radius:13px;padding:10px 13px;background:#fff;box-shadow:3px 3px 0 var(--ink);font-size:11.5px;font-weight:700;margin-top:4px;">
+            🔔 复习提醒已开启：到期日 09:30 会提醒你，不想被念也可以去设置里关掉
+          </div>
+
+          <div class="next-btn red" style="margin-top:auto;">开始重温（3 道）→</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.07</span> <b>旧识重温</b> · 遗忘曲线提醒（第 1/3/7 天）</div>
+    </div>
+
+    <!-- ================ E08 错题毕业 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+
+          <div style="text-align:center;padding:14px 0 6px;">
+            <div style="font-family:var(--font-title);font-size:27px;">错题毕业啦！🎓</div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-top:5px;">连续答对 2 次，它已经彻底归顺你</div>
+          </div>
+
+          <div class="certificate">
+            <div class="c-title">错 题 毕 业 证</div>
+            <div class="c-line"></div>
+            <div class="c-body">
+              兹证明 <b>「RAG 的核心流程」</b><br>
+              已被你完全掌握，<br>
+              即日起移出错题本，<br>
+              它不会再回来烦你啦。
+            </div>
+            <div class="c-stamp">已毕业<br>09-30</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:9px;border:2.5px dashed var(--ink);border-radius:13px;padding:10px 13px;background:var(--yellow-soft);font-size:11.5px;font-weight:700;margin-bottom:14px;">
+            🏆 成就解锁：「第一次让错题毕业」· 已收入你的成就墙
+          </div>
+
+          <div class="next-btn red" style="margin-top:auto;">继续清理错题（还剩 2 道）→</div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.08</span> <b>错题毕业</b> · 仪式感拉满的成就感</div>
+    </div>
+
+    <!-- ================ E09 空状态合集 ================ -->
+    <div>
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span>●●● ▓▓ 100%</span></div>
+
+          <div class="sec-flag">空状态 A · 错题本空空如也</div>
+          <div class="empty-card" style="padding-top:22px;">
+            <div style="display:flex;justify-content:center;">
+              <svg class="mascot-svg" width="104" height="104"><use href="#mascot-happy"/></svg>
+            </div>
+            <div class="et">错题本空空如也！</div>
+            <div class="ed">要么你全答对了，要么…你还没开始闯关？<br>不管哪种，现在都是刷题的好时候</div>
+            <span class="eb">去闯一关 →</span>
+          </div>
+
+          <div class="sec-flag">空状态 B · 还没有学习记录</div>
+          <div class="empty-mini" style="margin-bottom:14px;">
+            <span class="em-ic">🗂️</span>
+            <div>
+              <div class="em-t">知识库还是空的</div>
+              <div class="em-d">回到首页输入一个知识点，AI 马上帮你出一套题</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:9px;border:2.5px dashed var(--ink);border-radius:13px;padding:10px 13px;background:var(--paper-2);font-size:11.5px;font-weight:700;color:var(--muted);margin-top:auto;">
+            💡 设计说明：空状态不摆烂——用吉祥物 + 幽默文案给用户“下一步”的推力，而不是一句冷冰冰的“暂无数据”
+          </div>
+        </div>
+      </div>
+      <div class="screen-label"><span class="no">E.09</span> <b>空状态合集</b> · 彩蛋式引导设计</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
