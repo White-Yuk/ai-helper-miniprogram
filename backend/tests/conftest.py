@@ -87,3 +87,42 @@ def app():
 def client(app):
     with TestClient(app) as c:
         yield c
+
+
+# ---- 数据库测试夹具（阶段 1+） ----
+# 说明：测试统一使用 SQLite 临时文件库（不依赖本机 MySQL，保证随时可跑）；
+# 业务代码不写 MySQL 专属 SQL，真实库兼容性由 scripts/check_db.py 与联调验证。
+
+
+@pytest.fixture()
+def db_session(tmp_path):
+    """独立的 SQLite 临时库会话（每个测试独享，自动销毁）。"""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    import app.models.user  # noqa: F401  确保全部模型注册到 metadata
+    from app.core.db import Base
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(bind=engine, expire_on_commit=False)
+    session = factory()
+    try:
+        yield session
+    finally:
+        session.close()
+        engine.dispose()
+
+
+@pytest.fixture()
+def client_db(app, db_session):
+    """覆盖 get_db 依赖的 TestClient：API 测试走 SQLite 临时库。"""
+    from app.core.db import get_db
+
+    def _override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()

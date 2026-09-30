@@ -66,3 +66,18 @@ export interface ApiResponse<T> {
   message: string
   data: T | null
 }
+
+/** 用户信息（对应后端 /auth/login 与 /me） */
+export interface UserPublic {
+  id: number
+  nickname: string
+  avatar: string
+}
+
+/** 登录接口返回数据 */
+export interface LoginData {
+  token: string
+  expires_at: string
+  is_new: boolean
+  user: UserPublic
+}

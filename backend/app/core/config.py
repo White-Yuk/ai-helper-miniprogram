@@ -35,9 +35,41 @@ class Settings(BaseSettings):
     # 失败后的重试次数（不含首次调用）；总尝试次数 = llm_max_retries + 1
     llm_max_retries: int = 2
 
+    # ---- 数据库（MySQL） ----
+    # 可选：完整 SQLAlchemy URL（非空时优先使用；一般不需要填）
+    database_url: str = ""
+    db_host: str = "127.0.0.1"
+    db_port: int = 3306
+    db_user: str = "root"
+    # ★ 只需在 .env 中填写 DB_PASSWORD 即可
+    db_password: str = ""
+    db_name: str = "ai_quiz"
+
+    # ---- 登录鉴权（JWT） ----
+    jwt_secret: str = "dev-secret-change-me"
+    jwt_expire_days: int = 30
+
+    # ---- 微信小程序 ----
+    wechat_appid: str = ""
+    wechat_secret: str = ""
+    # true=开启开发态模拟登录（仅本地调试用；接入真实微信登录后置为 false）
+    auth_mock_enabled: bool = True
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def db_url(self) -> str:
+        """组装 SQLAlchemy 数据库 URL（密码自动 URL 编码，支持任意特殊字符）。"""
+        if self.database_url:
+            return self.database_url
+        from urllib.parse import quote_plus
+
+        return (
+            f"mysql+pymysql://{self.db_user}:{quote_plus(self.db_password)}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
+        )
 
 
 @lru_cache
