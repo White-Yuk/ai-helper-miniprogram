@@ -2,7 +2,7 @@
    "miniprogramRoot": "dist/",
   "projectname": "ai-quiz-front",
   "description": "AI 闯关学习小程序 MVP",
-  "appid": "touristappid",
+  "appid": "wx930d3548ad25e234",
   "setting": {
     "urlCheck": true,
     "es6": false,

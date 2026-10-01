@@ -209,3 +209,13 @@ class TestMeEndpoint:
         assert me["id"] == data["user"]["id"]
         assert me["nickname"] == data["user"]["nickname"]
         assert me["avatar"] == ""
+
+    def test_me_contains_stats_and_continue_fields(self, client_db):
+        """阶段 2：/me 扩展 stats 与 continue_learning 字段（当前为占位值）。"""
+        data = _dev_login(client_db, "device_me_stats")
+
+        resp = client_db.get("/api/v1/me", headers={"Authorization": f"Bearer {data['token']}"})
+        assert resp.status_code == 200, resp.text
+        me = resp.json()["data"]
+        assert me["stats"] == {"quiz_count": 0, "answered_count": 0, "avg_accuracy": 0}
+        assert me["continue_learning"] is None

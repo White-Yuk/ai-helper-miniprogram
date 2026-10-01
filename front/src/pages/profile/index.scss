@@ -1,0 +1,205 @@
+.profile-page {
+  box-sizing: border-box;
+  padding: 0 14px 20px;
+  min-height: 100vh;
+}
+
+/* ---------- 顶栏 ---------- */
+.profile-top {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 14px;
+
+  &__title {
+    margin-left: 12px;
+    font-size: $fs-lg;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+}
+
+/* ---------- 用户信息 ---------- */
+.profile-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+
+  &__avatar {
+    width: 72px;
+    height: 72px;
+    box-sizing: border-box;
+    border: $border-ink;
+    border-radius: 50%;
+    background-color: $yellow;
+    box-shadow: $shadow-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    margin-left: 13px;
+    overflow: hidden;
+  }
+
+  &__name {
+    display: block;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.3;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__desc {
+    display: block;
+    font-size: 11.5px;
+    color: $muted;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+}
+
+/* ---------- 数据概览三宫格 ---------- */
+.stat3 {
+  display: flex;
+  margin-bottom: 14px;
+
+  &__box {
+    flex: 1;
+    border: $border-ink;
+    border-radius: $radius;
+    background-color: $white;
+    box-shadow: $shadow-card;
+    padding: 10px 4px 9px;
+    text-align: center;
+    margin-right: 9px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  &__value {
+    display: block;
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1.2;
+
+    &--green {
+      color: $green-deep;
+    }
+  }
+
+  &__label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 900;
+    color: $muted;
+    margin-top: 2px;
+  }
+}
+
+/* ---------- 区块小旗标 ---------- */
+.sec-flag {
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 900;
+  margin: 2px 0 9px;
+  padding: 1px 4px;
+  background: linear-gradient(transparent 55%, $yellow 55%, $yellow 92%, transparent 92%);
+}
+
+/* ---------- 工具箱 ---------- */
+.toolbox {
+  display: flex;
+  margin-bottom: 14px;
+
+  &__item {
+    flex: 1;
+    box-sizing: border-box;
+    border: $border-ink-thin;
+    border-radius: $radius;
+    background-color: $white;
+    box-shadow: $shadow-soft;
+    padding: 11px 2px 9px;
+    text-align: center;
+    margin-right: 9px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+
+    &--active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 $ink;
+    }
+  }
+
+  &__icon {
+    display: block;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  &__label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 900;
+    margin-top: 5px;
+  }
+}
+
+/* ---------- 继续学习卡片 ---------- */
+.continue-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: $border-ink;
+  border-radius: $radius;
+  background-color: $yellow;
+  @include dot-grid(rgba(31, 31, 31, 0.12), 9px, 1.4px);
+  box-shadow: $shadow-sm;
+  padding: 12px 14px;
+  margin-top: 4px;
+
+  &__info {
+    flex: 1;
+    overflow: hidden;
+    margin-right: 10px;
+  }
+
+  &__title {
+    display: block;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.45;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__sub {
+    display: block;
+    font-size: 11px;
+    color: rgba(31, 31, 31, 0.7);
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  &__go {
+    font-size: 12.5px;
+    font-weight: 900;
+    background-color: $red;
+    color: $white;
+    border: $border-ink-thin;
+    border-radius: $radius-round;
+    padding: 4px 11px 5px;
+    box-shadow: 3px 3px 0 $ink;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

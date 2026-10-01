@@ -1,6 +1,7 @@
 export default defineAppConfig({
   pages: [
     'pages/index/index',
+    'pages/profile/index',
     'pages/generating/index',
     'pages/quiz/index',
     'pages/result/index',

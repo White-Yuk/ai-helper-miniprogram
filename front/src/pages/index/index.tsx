@@ -67,7 +67,7 @@ export default function Index() {
   }
 
   const handleAvatar = () => {
-    Taro.showToast({ title: '用户中心即将上线', icon: 'none' })
+    Taro.navigateTo({ url: '/pages/profile/index' })
   }
 
   return (

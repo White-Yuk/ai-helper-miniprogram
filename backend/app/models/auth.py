@@ -33,3 +33,30 @@ class LoginData(BaseModel):
     expires_at: datetime
     is_new: bool
     user: UserPublic
+
+
+class UserStats(BaseModel):
+    """用户学习统计（阶段 3 接入真实数据，当前返回占位值）。"""
+
+    quiz_count: int = 0
+    answered_count: int = 0
+    avg_accuracy: int = 0
+
+
+class ContinueLearning(BaseModel):
+    """最近未完成闯关摘要（阶段 3 接入真实数据）。"""
+
+    quiz_id: str
+    title: str
+    current_index: int
+    total: int
+
+
+class MeData(BaseModel):
+    """GET /me 响应数据。"""
+
+    id: int
+    nickname: str
+    avatar: str = ""
+    stats: UserStats = Field(default_factory=UserStats)
+    continue_learning: ContinueLearning | None = None

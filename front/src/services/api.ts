@@ -3,11 +3,11 @@ import Taro from '@tarojs/taro'
 import type {
   ApiResponse,
   LoginData,
+  MeData,
   QuizData,
   QuizGenerateRequest,
   ReportData,
   ReportGenerateRequest,
-  UserPublic,
 } from '../types'
 
 /**
@@ -129,7 +129,7 @@ export function devLogin(deviceId: string) {
   return request<LoginData>({ url: '/api/v1/auth/dev-login', method: 'POST', data: { device_id: deviceId } })
 }
 
-/** 当前登录用户信息 */
+/** 当前登录用户信息（含统计与续答） */
 export function fetchMe() {
-  return request<UserPublic>({ url: '/api/v1/me' })
+  return request<MeData>({ url: '/api/v1/me' })
 }

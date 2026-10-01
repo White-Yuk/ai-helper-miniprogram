@@ -81,3 +81,27 @@ export interface LoginData {
   is_new: boolean
   user: UserPublic
 }
+
+/** 用户学习统计（对应用户中心三宫格） */
+export interface UserStats {
+  quiz_count: number
+  answered_count: number
+  avg_accuracy: number
+}
+
+/** 最近未完成闯关摘要（“上次没打完的”卡片） */
+export interface ContinueLearning {
+  quiz_id: string
+  title: string
+  current_index: number
+  total: number
+}
+
+/** GET /me 返回数据（用户信息 + 统计 + 续答） */
+export interface MeData {
+  id: number
+  nickname: string
+  avatar: string
+  stats: UserStats
+  continue_learning: ContinueLearning | null
+}
