@@ -6,8 +6,13 @@ import type {
   MeData,
   QuizData,
   QuizGenerateRequest,
+  QuizProgressData,
+  QuizProgressRequest,
+  QuizSubmitData,
+  QuizSubmitRequest,
   ReportData,
   ReportGenerateRequest,
+  UnfinishedQuizData,
 } from '../types'
 
 /**
@@ -29,8 +34,10 @@ export class ApiError extends Error {
 
 interface RequestOptions {
   url: string
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PUT'
   data?: unknown
+  /** 允许 data 为 null（如“无未完成闯关”是合法空态） */
+  allowNull?: boolean
 }
 
 /* ---------------- 登录态（token）管理 ---------------- */
@@ -90,7 +97,7 @@ async function request<T>(options: RequestOptions): Promise<T> {
   }
 
   const body = response.data as ApiResponse<T>
-  if (!body || body.code !== 0 || body.data == null) {
+  if (!body || body.code !== 0 || (body.data == null && !options.allowNull)) {
     const code = body?.code ?? -1
     if (code === 4003) {
       // 登录失效：清除本地 token，并触发一次静默重登（下次请求生效）
@@ -99,7 +106,7 @@ async function request<T>(options: RequestOptions): Promise<T> {
     }
     throw new ApiError(code, body?.message ?? '请求失败，请稍后重试')
   }
-  return body.data
+  return body.data as T
 }
 
 /** 健康检查 */
@@ -132,4 +139,21 @@ export function devLogin(deviceId: string) {
 /** 当前登录用户信息（含统计与续答） */
 export function fetchMe() {
   return request<MeData>({ url: '/api/v1/me' })
+}
+
+/* ---------------- 历史答题记录 + 续答（阶段 3） ---------------- */
+
+/** 最近未完成闯关（含完整题库与已答记录）；无进行中闯关时返回 null */
+export function fetchUnfinishedQuiz() {
+  return request<UnfinishedQuizData | null>({ url: '/api/v1/quiz/unfinished', allowNull: true })
+}
+
+/** 保存中途进度（幂等：全量覆盖） */
+export function saveQuizProgress(quizId: string, payload: QuizProgressRequest) {
+  return request<QuizProgressData>({ url: `/api/v1/quiz/${quizId}/progress`, method: 'PUT', data: payload })
+}
+
+/** 提交完整作答（服务端将 quiz 置为完成） */
+export function submitQuiz(quizId: string, payload: QuizSubmitRequest) {
+  return request<QuizSubmitData>({ url: `/api/v1/quiz/${quizId}/submit`, method: 'POST', data: payload })
 }

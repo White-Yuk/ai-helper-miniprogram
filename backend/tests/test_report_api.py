@@ -1,8 +1,11 @@
-"""报告接口测试：成功路径、参数校验、失败兜底。"""
+"""报告接口测试：成功路径、参数校验、失败兜底、阶段 3 落库。"""
 from __future__ import annotations
 
+import pytest
+from sqlalchemy import select
+
 from app.api.v1.routes.report import get_report_chain
-from tests.conftest import FakeChain
+from tests.conftest import FakeChain, login_headers
 
 
 def make_payload() -> dict:
@@ -89,3 +92,79 @@ class TestReportGenerateApi:
         body = resp.json()
         assert body["code"] == 4002
         assert body["data"] is None
+
+
+@pytest.mark.usefixtures("auth_settings")
+class TestReportPersist:
+    """阶段 3：带 token 且 quiz 归属本人时，报告落库（reports）。"""
+
+    GENERATE_PAYLOAD = {
+        "user_input": "什么是 RAG？",
+        "question_count": 4,
+        "difficulty": "mixed",
+        "question_types": ["single", "multiple", "judge", "fill"],
+    }
+
+    @staticmethod
+    def _generate_quiz(app, client, headers, sample_quiz_data) -> str:
+        from app.api.v1.routes.quiz import get_quiz_chain
+
+        app.dependency_overrides[get_quiz_chain] = lambda: FakeChain([sample_quiz_data])
+        resp = client.post("/api/v1/quiz/generate", json=TestReportPersist.GENERATE_PAYLOAD, headers=headers)
+        assert resp.status_code == 200, resp.text
+        return resp.json()["data"]["quiz_id"]
+
+    @staticmethod
+    def _report_payload(quiz_id: str, sample_quiz_data) -> dict:
+        return {
+            "quiz_id": quiz_id,
+            "topic": sample_quiz_data.title,
+            "questions": [q.model_dump() for q in sample_quiz_data.questions],
+            "answer_records": [
+                {"question_id": q.id, "selected_answers": q.answer, "is_correct": True, "duration_ms": 1200}
+                for q in sample_quiz_data.questions
+            ],
+        }
+
+    def test_report_persisted_for_owned_quiz(self, app, client_db, db_session, sample_quiz_data):
+        from app.models.records import Report
+
+        headers = login_headers(client_db, "device_report")
+        quiz_id = self._generate_quiz(app, client_db, headers, sample_quiz_data)
+        app.dependency_overrides[get_report_chain] = lambda: _FakeStructuredChain()
+
+        resp = client_db.post(
+            "/api/v1/report/generate", json=self._report_payload(quiz_id, sample_quiz_data), headers=headers
+        )
+
+        assert resp.status_code == 200, resp.text
+        reports = db_session.scalars(select(Report)).all()
+        assert len(reports) == 1
+        assert reports[0].quiz_id == quiz_id
+        assert reports[0].content["accuracy"] == 100
+        assert reports[0].content["share_quote"] == "把知识做成关卡，记忆会更深。"
+
+    def test_report_not_persisted_when_anonymous(self, app, client_db, db_session):
+        from app.models.records import Report
+
+        app.dependency_overrides[get_report_chain] = lambda: _FakeStructuredChain()
+
+        resp = client_db.post("/api/v1/report/generate", json=make_payload())
+
+        assert resp.status_code == 200
+        assert db_session.scalars(select(Report)).all() == []
+
+    def test_report_not_persisted_for_other_users_quiz(self, app, client_db, db_session, sample_quiz_data):
+        from app.models.records import Report
+
+        owner_headers = login_headers(client_db, "device_owner")
+        quiz_id = self._generate_quiz(app, client_db, owner_headers, sample_quiz_data)
+        other_headers = login_headers(client_db, "device_intruder")
+        app.dependency_overrides[get_report_chain] = lambda: _FakeStructuredChain()
+
+        resp = client_db.post(
+            "/api/v1/report/generate", json=self._report_payload(quiz_id, sample_quiz_data), headers=other_headers
+        )
+
+        assert resp.status_code == 200  # 报告正常返回，但跳过落库
+        assert db_session.scalars(select(Report)).all() == []

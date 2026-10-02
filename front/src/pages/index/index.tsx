@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { View, Text, Textarea } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 
 import PageShell from '../../components/PageShell'
 import Mascot from '../../components/Mascot'
 import InkButton from '../../components/InkButton'
-import type { QuestionType, QuizDifficulty } from '../../types'
+import { fetchUnfinishedQuiz } from '../../services/api'
+import { ensureLogin } from '../../services/auth'
+import { useQuizStore } from '../../store/quizStore'
+import type { QuestionType, QuizDifficulty, UnfinishedQuizData } from '../../types'
 
 import './index.scss'
 
@@ -26,12 +29,44 @@ const DIFFICULTY_OPTIONS: { key: QuizDifficulty; label: string }[] = [
   { key: 'hard', label: '困难' },
 ]
 
+/** 续答卡片副标题（对齐原型 P01：“上次正确率 80% · 错 1 题”） */
+function buildResumeSubtitle(data: UnfinishedQuizData): string {
+  if (data.records.length === 0) return '还没开打 · 现在出发'
+  const correct = data.records.filter((record) => record.is_correct).length
+  const accuracy = Math.round((correct / data.records.length) * 100)
+  return `上次正确率 ${accuracy}% · 错 ${data.records.length - correct} 题`
+}
+
 export default function Index() {
   const [userInput, setUserInput] = useState('')
   const [sheetVisible, setSheetVisible] = useState(false)
   const [types, setTypes] = useState<QuestionType[]>(['single', 'multiple', 'judge'])
   const [count, setCount] = useState(5)
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('mixed')
+  const [unfinished, setUnfinished] = useState<UnfinishedQuizData | null>(null)
+
+  // 每次页面显示时刷新「上次没打完的」（含从答题页返回、小程序重进）
+  useDidShow(() => {
+    ensureLogin()
+      .then(() => fetchUnfinishedQuiz())
+      .then((data) => setUnfinished(data))
+      .catch(() => {
+        // 未登录 / 网络异常：不展示卡片，不打扰主流程
+      })
+  })
+
+  /** 继续上次没打完的闯关（阶段 3） */
+  const resumeQuiz = () => {
+    if (!unfinished) return
+    const { quiz_id, title, summary, questions, records, current_index, total } = unfinished
+    useQuizStore.getState().restoreQuiz({ quiz_id, title, summary, questions }, records, current_index)
+    // 已答完但未提交（如报告生成失败退出）：直接回报告页重试
+    if (current_index >= total) {
+      Taro.navigateTo({ url: '/pages/report/index' })
+    } else {
+      Taro.navigateTo({ url: '/pages/quiz/index' })
+    }
+  }
 
   const openConfig = () => {
     if (!userInput.trim()) {
@@ -129,6 +164,22 @@ export default function Index() {
           </View>
         ))}
       </View>
+
+      {/* 上次没打完的（阶段 3：续答入口，原型 P01） */}
+      {unfinished && (
+        <View>
+          <View className='sec-flag'>上次没打完的 👇</View>
+          <View className='recent-card' hoverClass='recent-card--active' onClick={resumeQuiz}>
+            <View className='recent-card__main'>
+              <Text className='recent-card__title'>
+                {unfinished.title} · 第 {Math.min(unfinished.current_index + 1, unfinished.total)}/{unfinished.total} 关
+              </Text>
+              <Text className='recent-card__sub'>{buildResumeSubtitle(unfinished)}</Text>
+            </View>
+            <Text className='recent-card__go'>继续 →</Text>
+          </View>
+        </View>
+      )}
 
       {/* 配置弹层 */}
       {sheetVisible && (

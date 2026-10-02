@@ -13,14 +13,14 @@ import './index.scss'
 const TOOLBOX = [
   { key: 'library', icon: '📚', label: '知识库' },
   { key: 'wrongbook', icon: '📕', label: '错题本' },
-  { key: 'stats', icon: '📊', label: '学习报表' },
+  { key: 'stats', icon: '📊', label: '学习汇报' },
   { key: 'settings', icon: '⚙️', label: '设置' },
 ] as const
 
 const TOOLBOX_LAUNCHING: Record<(typeof TOOLBOX)[number]['key'], string> = {
   library: '知识库即将上线',
   wrongbook: '错题本即将上线',
-  stats: '学习报表即将上线',
+  stats: '学习汇报即将上线',
   settings: '设置即将上线',
 }
 

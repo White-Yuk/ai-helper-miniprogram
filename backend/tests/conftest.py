@@ -100,7 +100,7 @@ def db_session(tmp_path):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    import app.models.user  # noqa: F401  确保全部模型注册到 metadata
+    import app.models  # noqa: F401  确保全部模型注册到 metadata
     from app.core.db import Base
 
     engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
@@ -126,3 +126,34 @@ def client_db(app, db_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+# ---- 登录相关测试夹具（阶段 1+） ----
+
+
+@pytest.fixture()
+def auth_settings(monkeypatch):
+    """隔离登录相关配置（不读 .env 的真实值），并在测试后清理缓存。"""
+    monkeypatch.setenv("AUTH_MOCK_ENABLED", "true")
+    monkeypatch.setenv("JWT_SECRET", "test-secret-for-pytest-0123456789abcdef0123456789abcdef")
+    monkeypatch.setenv("JWT_EXPIRE_DAYS", "30")
+    monkeypatch.setenv("WECHAT_APPID", "")
+    monkeypatch.setenv("WECHAT_SECRET", "")
+
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+def login_headers(client, device_id: str = "device_default") -> dict[str, str]:
+    """辅助：开发态模拟登录，返回可直接使用的 Authorization 头。
+
+    使用前需先激活 auth_settings 夹具（test 文件里用 pytestmark = pytest.mark.usefixtures("auth_settings")）。
+    """
+    resp = client.post("/api/v1/auth/dev-login", json={"device_id": device_id})
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["code"] == 0
+    return {"Authorization": f"Bearer {body['data']['token']}"}

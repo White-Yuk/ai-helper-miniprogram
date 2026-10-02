@@ -7,7 +7,7 @@ import BackButton from '../../components/BackButton'
 import Mascot from '../../components/Mascot'
 import SpeechBubble from '../../components/SpeechBubble'
 import InkButton from '../../components/InkButton'
-import { ApiError, generateReport } from '../../services/api'
+import { ApiError, generateReport, submitQuiz } from '../../services/api'
 import { useQuizStore } from '../../store/quizStore'
 import type { ReportData } from '../../types'
 
@@ -37,6 +37,12 @@ export default function Report() {
       })
       setReport(data)
       setStatus('success')
+
+      // 阶段 3：提交完成数据（quiz 置 done + answers 定稿）；失败不阻塞报告展示，
+      // 此时 quiz 仍为“进行中”，首页续答卡片可再次进入本页重试（提交幂等）
+      void submitQuiz(quiz.quiz_id, { records }).catch((error) => {
+        console.warn('[report] 完成数据提交失败', error)
+      })
 
       // 存档：供海报页与首页「上次战绩」使用
       const { xp, maxCombo } = useQuizStore.getState()

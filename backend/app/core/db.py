@@ -48,6 +48,6 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     """创建全部数据表（开发/测试用；不处理版本迁移）。"""
-    import app.models.user  # noqa: F401  确保模型注册到 Base.metadata
+    import app.models  # noqa: F401  确保全部模型注册到 Base.metadata
 
     Base.metadata.create_all(bind=get_engine())

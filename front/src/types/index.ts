@@ -105,3 +105,42 @@ export interface MeData {
   stats: UserStats
   continue_learning: ContinueLearning | null
 }
+
+/* ---------------- 阶段 3：历史答题记录 + 续答 ---------------- */
+
+/** 保存中途进度请求（幂等：全量覆盖） */
+export interface QuizProgressRequest {
+  /** 已答题数（= 恢复时的起始题索引） */
+  current_index: number
+  records: AnswerRecord[]
+}
+
+/** 保存中途进度响应 */
+export interface QuizProgressData {
+  current_index: number
+  saved_count: number
+}
+
+/** 提交完整作答请求 */
+export interface QuizSubmitRequest {
+  records: AnswerRecord[]
+}
+
+/** 提交完整作答响应 */
+export interface QuizSubmitData {
+  quiz_id: string
+  status: string
+  answered_count: number
+}
+
+/** 最近未完成闯关（含完整题库与已答记录，供续答恢复） */
+export interface UnfinishedQuizData {
+  quiz_id: string
+  title: string
+  summary: string
+  questions: Question[]
+  current_index: number
+  records: AnswerRecord[]
+  total: number
+  updated_at: string
+}

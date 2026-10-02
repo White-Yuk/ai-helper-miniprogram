@@ -10,13 +10,11 @@ import Stamp from '../../components/Stamp'
 import SpeechBubble from '../../components/SpeechBubble'
 import InkButton from '../../components/InkButton'
 import { gradeAnswer } from '../../utils/grader'
-import { useQuizStore } from '../../store/quizStore'
+import { saveQuizProgress } from '../../services/api'
+import { XP_CORRECT, XP_WRONG, useQuizStore } from '../../store/quizStore'
 import type { Question } from '../../types'
 
 import './index.scss'
-
-const XP_CORRECT = 20
-const XP_WRONG = 5
 
 /** 下划线占位:用于填空题干的渲染 */
 function splitByBlank(stem: string): string[] {
@@ -29,13 +27,28 @@ export default function Quiz() {
   const combo = useQuizStore((state) => state.combo)
   const recordAnswer = useQuizStore((state) => state.recordAnswer)
 
-  const [current, setCurrent] = useState(0)
+  // 续答恢复：从断点题开始（新闯关 resumeIndex 恒为 0）
+  const [current, setCurrent] = useState(() =>
+    Math.min(useQuizStore.getState().resumeIndex, Math.max((useQuizStore.getState().quiz?.questions.length ?? 1) - 1, 0)),
+  )
   const [phase, setPhase] = useState<'answering' | 'feedback'>('answering')
   const [selected, setSelected] = useState<string[]>([])
   const [fillInputs, setFillInputs] = useState<string[]>([])
   const [lastCorrect, setLastCorrect] = useState(false)
 
   const questionStartRef = useRef(Date.now())
+
+  /** 异步保存中途进度（失败不阻塞答题；未登录 / 未落库时静默） */
+  const persistProgress = () => {
+    const state = useQuizStore.getState()
+    if (!state.quiz || state.records.length === 0) return
+    saveQuizProgress(state.quiz.quiz_id, {
+      current_index: state.records.length,
+      records: state.records,
+    }).catch((error) => {
+      console.warn('[quiz] 进度保存失败（不影响答题）', error)
+    })
+  }
 
   // 没有题库（例如直接进入本页）→ 回首页
   useEffect(() => {
@@ -78,6 +91,9 @@ export default function Quiz() {
       correct ? XP_CORRECT : XP_WRONG,
     )
 
+    // 每答一题异步保存进度（阶段 3）
+    persistProgress()
+
     setSelected(answers)
     setLastCorrect(correct)
     setPhase('feedback')
@@ -94,7 +110,7 @@ export default function Quiz() {
   const handleBack = () => {
     Taro.showModal({
       title: '退出闯关？',
-      content: '当前进度不会保存哦',
+      content: '进度已自动保存，随时回来继续哦',
       confirmText: '退出',
       cancelText: '继续答题',
       success: (res) => {
