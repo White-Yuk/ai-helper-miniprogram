@@ -1,0 +1,211 @@
+.stats-page {
+  box-sizing: border-box;
+  padding: 0 14px 24px;
+  min-height: 100vh;
+}
+
+/* ---------- 顶栏 ---------- */
+.stats-top {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 14px;
+
+  &__title {
+    font-size: $fs-lg;
+    font-weight: 900;
+    margin-left: 10px;
+  }
+}
+
+/* ---------- 范围切换 ---------- */
+.chip-row {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.chip {
+  font-size: $fs-sm;
+  font-weight: 700;
+  border: $border-ink-thin;
+  border-radius: $radius-round;
+  background-color: $white;
+  padding: 4px 13px 5px;
+  box-shadow: 2.5px 2.5px 0 $ink;
+  margin-right: 8px;
+
+  &--on {
+    background-color: $yellow;
+  }
+}
+
+/* ---------- 状态（加载 / 错误 / 空态） ---------- */
+.stats-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 48px;
+
+  &__bubble {
+    margin-top: 18px;
+  }
+
+  &__error {
+    font-size: $fs-md;
+    color: $muted;
+    font-weight: 700;
+    margin: 16px 0 18px;
+    text-align: center;
+  }
+}
+
+.stats-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  border: $border-ink;
+  border-radius: $radius-lg;
+  background-color: $white;
+  box-shadow: $shadow-sm;
+  padding: 24px 18px;
+  margin-top: 20px;
+
+  &__title {
+    font-size: $fs-xl;
+    font-weight: 900;
+    margin-top: 10px;
+  }
+
+  &__desc {
+    font-size: $fs-sm;
+    color: $muted;
+    font-weight: 600;
+    line-height: 1.7;
+    margin: 6px 0 16px;
+    text-align: center;
+  }
+}
+
+/* ---------- 图表卡 ---------- */
+.chart-card {
+  border: $border-ink;
+  border-radius: 15px;
+  background-color: $white;
+  box-shadow: $shadow-sm;
+  padding: 13px 14px;
+  margin-bottom: 13px;
+
+  &__title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: $fs-md;
+    font-weight: 900;
+    margin-bottom: 10px;
+  }
+
+  &__value {
+    font-size: $fs-lg;
+    font-weight: 900;
+    color: $red;
+  }
+}
+
+.domain-empty {
+  display: block;
+  font-size: $fs-sm;
+  color: $muted;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+/* ---------- 手绘折线图 ---------- */
+.line-chart {
+  position: relative;
+  width: 100%;
+}
+
+.line-seg {
+  position: absolute;
+  height: 4px;
+  border-radius: 2px;
+  background-color: $red;
+  transform-origin: 0 50%;
+}
+
+.line-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 2.5px solid $ink;
+  border-radius: 50%;
+  background-color: $yellow;
+  transform: translate(-50%, -50%);
+}
+
+.line-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 900;
+  color: $muted;
+  padding: 0 2px;
+  margin-top: 6px;
+}
+
+/* ---------- 领域条形图 ---------- */
+.hbar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 9px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__lbl {
+    width: 96px;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 900;
+    margin-right: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__val {
+    width: 42px;
+    flex-shrink: 0;
+    font-size: $fs-sm;
+    font-weight: 900;
+    text-align: right;
+  }
+}
+
+.bar-track {
+  flex: 1;
+  height: 14px;
+  box-sizing: border-box;
+  border: $border-ink-thin;
+  border-radius: $radius-round;
+  background-color: $white;
+  padding: 2px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: $radius-round;
+  background-color: $yellow;
+
+  &--green {
+    background-color: $green;
+  }
+
+  &--red {
+    background-color: $red;
+  }
+}

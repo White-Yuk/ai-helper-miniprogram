@@ -1,0 +1,133 @@
+.redo-page {
+  box-sizing: border-box;
+  padding: 0 14px 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 顶栏 ---------- */
+.redo-head {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 12px;
+
+  &__main {
+    flex: 1;
+    margin-left: 10px;
+  }
+}
+
+.redo-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 900;
+  background-color: $red;
+  color: $white;
+  border: $border-ink-thin;
+  border-radius: $radius-round;
+  padding: 2px 11px 3px;
+  box-shadow: 2.5px 2.5px 0 $ink;
+  transform: rotate(-1deg);
+}
+
+/* ---------- 状态 ---------- */
+.redo-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 56px;
+
+  &__text {
+    font-size: $fs-md;
+    color: $muted;
+    font-weight: 700;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+}
+
+.redo-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 进度 ---------- */
+.progress-chip {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: $muted;
+  margin-bottom: 5px;
+}
+
+.redo-q {
+  margin-top: 15px;
+}
+
+/* ---------- 上次错误提示 ---------- */
+.redo-hint {
+  display: flex;
+  align-items: center;
+  border: 2.5px dashed $ink;
+  border-radius: 13px;
+  padding: 10px 13px;
+  background-color: $red-light;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* ---------- 底部 ---------- */
+.redo-foot {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.redo-foot-tip {
+  margin-top: auto;
+  box-sizing: border-box;
+  border: 2.5px dashed #c9c0b2;
+  border-radius: 13px;
+  padding: 12px;
+  text-align: center;
+  font-size: $fs-sm;
+  color: $muted;
+  font-weight: 700;
+}
+
+/* ---------- 完成态 ---------- */
+.redo-finish {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 42px;
+
+  &__boom {
+    font-size: 26px;
+    font-weight: 900;
+    color: $white;
+  }
+
+  &__copy {
+    font-size: $fs-lg;
+    font-weight: 900;
+    margin-top: 22px;
+  }
+
+  &__sub {
+    font-size: $fs-sm;
+    color: $muted;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  &__actions {
+    width: 100%;
+    margin-top: 26px;
+  }
+}

@@ -18,8 +18,9 @@ from app.core.exceptions import BizException
 from app.models.auth import ContinueLearning
 from app.models.progress import QuizProgressData, QuizSubmitData, UnfinishedQuizData
 from app.models.quiz import QuizGenerateData
-from app.models.records import Answer, Quiz, Report
+from app.models.records import Answer, Quiz, RedoRecord, Report
 from app.models.report import AnswerRecord, ReportData
+from app.models.wrongbook import RedoSubmitData, RedoSubmitRequest, WrongItem, WrongbookData
 
 logger = logging.getLogger(__name__)
 
@@ -166,3 +167,101 @@ def save_report(session: Session, user_id: int, quiz_id: str, content: ReportDat
         return
     session.add(Report(quiz_id=quiz_id, user_id=user_id, content=content.model_dump()))
     session.commit()
+
+
+# ---------------- 阶段 6：错题本 ----------------
+
+
+def get_wrongbook(session: Session, user_id: int) -> WrongbookData:
+    """错题本：答错且未清理（最近一次重做未答对）的题目列表。
+
+    - 已清理判定：该题最近一次重做 is_correct=True -> 移除
+    - wrong_count = 原始答错 1 次 + 重做答错次数
+    - last_wrong_answers = 最近一次错误作答（重做错优先，否则原始错答）
+    - 排序：最近一次作答/重做时间倒序
+    """
+    wrong_answers = session.scalars(
+        select(Answer)
+        .where(Answer.user_id == user_id, Answer.is_correct.is_(False))
+        .order_by(Answer.id)
+    ).all()
+    redos = session.scalars(
+        select(RedoRecord).where(RedoRecord.user_id == user_id).order_by(RedoRecord.id)
+    ).all()
+
+    redo_by_question: dict[tuple[str, str], list[RedoRecord]] = {}
+    for item in redos:
+        redo_by_question.setdefault((item.quiz_id, item.question_id), []).append(item)
+
+    quiz_cache: dict[str, Quiz | None] = {}
+    collected: list[tuple] = []  # (最近时间, WrongItem)
+
+    for answer in wrong_answers:
+        logs = redo_by_question.get((answer.quiz_id, answer.question_id), [])
+        latest = logs[-1] if logs else None
+        if latest is not None and latest.is_correct:
+            continue  # 已清理
+
+        wrong_count = 1 + sum(1 for item in logs if not item.is_correct)
+
+        last_wrong = list(answer.selected_answers)
+        for item in reversed(logs):
+            if not item.is_correct:
+                last_wrong = list(item.selected_answers)
+                break
+
+        if answer.quiz_id not in quiz_cache:
+            quiz_cache[answer.quiz_id] = session.scalars(
+                select(Quiz).where(Quiz.quiz_id == answer.quiz_id)
+            ).one_or_none()
+        quiz = quiz_cache[answer.quiz_id]
+        if quiz is None:
+            continue
+        question = next((item for item in quiz.questions if item["id"] == answer.question_id), None)
+        if question is None:
+            continue
+
+        last_time = max([answer.created_at] + [item.created_at for item in logs])
+        collected.append(
+            (
+                last_time,
+                WrongItem(
+                    quiz_id=answer.quiz_id,
+                    question_id=answer.question_id,
+                    type=question["type"],
+                    stem=question["stem"],
+                    options=question.get("options", []),
+                    answer=question["answer"],
+                    explanation=question["explanation"],
+                    knowledge_point=question.get("knowledge_point", ""),
+                    wrong_count=wrong_count,
+                    last_wrong_answers=last_wrong,
+                ),
+            )
+        )
+
+    collected.sort(key=lambda pair: pair[0], reverse=True)
+    items = [item for _, item in collected]
+    return WrongbookData(total=len(items), items=items)
+
+
+def submit_redo(session: Session, user_id: int, payload: RedoSubmitRequest) -> RedoSubmitData:
+    """提交错题重做结果（追加一条记录），返回错题本剩余待清理数。"""
+    quiz = session.scalars(select(Quiz).where(Quiz.quiz_id == payload.quiz_id)).one_or_none()
+    if quiz is None or quiz.user_id != user_id:
+        raise BizException(code=4005, message="闯关不存在或不属于当前用户", http_status=404)
+    if not any(item["id"] == payload.question_id for item in quiz.questions):
+        raise BizException(code=4000, message="题目不在该闯关题库中", http_status=422)
+
+    session.add(
+        RedoRecord(
+            user_id=user_id,
+            quiz_id=payload.quiz_id,
+            question_id=payload.question_id,
+            selected_answers=list(payload.selected_answers),
+            is_correct=payload.is_correct,
+            duration_ms=payload.duration_ms,
+        )
+    )
+    session.commit()
+    return RedoSubmitData(remaining=get_wrongbook(session, user_id).total)

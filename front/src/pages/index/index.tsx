@@ -45,8 +45,14 @@ export default function Index() {
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('mixed')
   const [unfinished, setUnfinished] = useState<UnfinishedQuizData | null>(null)
 
-  // 每次页面显示时刷新「上次没打完的」（含从答题页返回、小程序重进）
+  // 每次页面显示时：读取续答卡片 / 接收「专练薄弱点」预填主题；刷新「上次没打完的」
   useDidShow(() => {
+    const prefill = Taro.getStorageSync('prefill_input')
+    if (prefill) {
+      setUserInput(String(prefill))
+      Taro.removeStorageSync('prefill_input')
+    }
+
     ensureLogin()
       .then(() => fetchUnfinishedQuiz())
       .then((data) => setUnfinished(data))

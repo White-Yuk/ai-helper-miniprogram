@@ -2,10 +2,15 @@ export default defineAppConfig({
   pages: [
     'pages/index/index',
     'pages/profile/index',
+    'pages/profile-edit/index',
     'pages/generating/index',
     'pages/quiz/index',
     'pages/result/index',
     'pages/report/index',
+    'pages/mastery/index',
+    'pages/stats/index',
+    'pages/wrongbook/index',
+    'pages/redo/index',
     'pages/poster/index'
   ],
   window: {

@@ -144,3 +144,100 @@ export interface UnfinishedQuizData {
   total: number
   updated_at: string
 }
+
+/* ---------------- 阶段 5：学习报表 / 知识掌握详情 ---------------- */
+
+export type StatsRange = 'week' | 'month' | 'all'
+
+/** 按天趋势点（无答题的日期 accuracy 为 null） */
+export interface TrendPoint {
+  date: string
+  total: number
+  correct: number
+  accuracy: number | null
+}
+
+/** 各领域（按闯关）掌握度 */
+export interface DomainStat {
+  quiz_id: string
+  name: string
+  total: number
+  correct: number
+  accuracy: number
+}
+
+/** GET /me/stats 返回数据 */
+export interface StatsData {
+  range: StatsRange
+  overall_accuracy: number | null
+  trend: TrendPoint[]
+  domains: DomainStat[]
+}
+
+export type KnowledgeState = 'mastered' | 'weak' | 'unlearned'
+
+/** 单个知识点掌握情况 */
+export interface KnowledgePointStat {
+  name: string
+  total: number
+  answered: number
+  correct: number
+  accuracy: number
+  state: KnowledgeState
+}
+
+/** GET /knowledge-base/{quiz_id} 返回数据 */
+export interface KnowledgeDetailData {
+  quiz_id: string
+  title: string
+  accuracy: number
+  total_points: number
+  mastered_count: number
+  weak_count: number
+  unlearned_count: number
+  points: KnowledgePointStat[]
+}
+
+/* ---------------- 阶段 6：错题本 ---------------- */
+
+/** 错题本条目（含完整题目数据，可直接重做） */
+export interface WrongItem {
+  quiz_id: string
+  question_id: string
+  type: QuestionType
+  stem: string
+  options: QuizOption[]
+  answer: string[]
+  explanation: string
+  knowledge_point: string
+  wrong_count: number
+  last_wrong_answers: string[]
+}
+
+/** GET /wrongbook 返回数据 */
+export interface WrongbookData {
+  total: number
+  items: WrongItem[]
+}
+
+/** POST /wrongbook/redo 请求 */
+export interface RedoSubmitRequest {
+  quiz_id: string
+  question_id: string
+  selected_answers: string[]
+  is_correct: boolean
+  duration_ms: number
+}
+
+/** POST /wrongbook/redo 响应 */
+export interface RedoSubmitData {
+  remaining: number
+}
+
+/* ---------------- 阶段 7：用户资料 ---------------- */
+
+/** PUT /me 请求（昵称 / 头像至少一项） */
+export interface ProfileUpdateRequest {
+  nickname?: string
+  avatar?: string
+}

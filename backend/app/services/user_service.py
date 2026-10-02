@@ -1,4 +1,4 @@
-"""用户服务：按 openid 查/建用户。"""
+"""用户服务：按 openid 查/建用户、更新资料。"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -23,3 +23,20 @@ def get_or_create_user_by_openid(session: Session, openid: str) -> tuple[User, b
     user.last_login_at = datetime.now()
     session.commit()
     return user, False
+
+
+def update_profile(
+    session: Session,
+    user: User,
+    *,
+    nickname: str | None = None,
+    avatar: str | None = None,
+) -> User:
+    """更新用户资料（昵称 / 头像）；None 表示不更新该字段。"""
+    if nickname is not None:
+        user.nickname = nickname
+    if avatar is not None:
+        user.avatar = avatar
+    session.commit()
+    session.refresh(user)
+    return user

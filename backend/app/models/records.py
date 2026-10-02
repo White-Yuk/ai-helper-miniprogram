@@ -62,3 +62,22 @@ class Report(Base):
     user_id: Mapped[int] = mapped_column(Integer, index=True)
     content: Mapped[dict[str, Any]] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class RedoRecord(Base):
+    """错题重做记录（阶段 6）：每次重做追加一条，用于错题本“清理”判定。
+
+    - 某题最近一次重做答对 -> 从错题本移除（答对即清理，不做连续对 2 次毕业）
+    - 重做答错 -> 留在待清理列表，计入错误次数
+    """
+
+    __tablename__ = "redo_records"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
+    quiz_id: Mapped[str] = mapped_column(String(32), index=True)
+    question_id: Mapped[str] = mapped_column(String(64))
+    selected_answers: Mapped[list[str]] = mapped_column(JSON)
+    is_correct: Mapped[bool] = mapped_column(Boolean)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)

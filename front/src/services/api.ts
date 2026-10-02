@@ -2,17 +2,25 @@ import Taro from '@tarojs/taro'
 
 import type {
   ApiResponse,
+  KnowledgeDetailData,
   LoginData,
   MeData,
+  ProfileUpdateRequest,
   QuizData,
   QuizGenerateRequest,
   QuizProgressData,
   QuizProgressRequest,
   QuizSubmitData,
   QuizSubmitRequest,
+  RedoSubmitData,
+  RedoSubmitRequest,
   ReportData,
   ReportGenerateRequest,
+  StatsData,
+  StatsRange,
   UnfinishedQuizData,
+  UserPublic,
+  WrongbookData,
 } from '../types'
 
 /**
@@ -156,4 +164,75 @@ export function saveQuizProgress(quizId: string, payload: QuizProgressRequest) {
 /** 提交完整作答（服务端将 quiz 置为完成） */
 export function submitQuiz(quizId: string, payload: QuizSubmitRequest) {
   return request<QuizSubmitData>({ url: `/api/v1/quiz/${quizId}/submit`, method: 'POST', data: payload })
+}
+
+/* ---------------- 学习报表 / 知识掌握详情（阶段 5） ---------------- */
+
+/** 学习报表：正确率趋势 + 各领域掌握度 */
+export function fetchStats(range: StatsRange) {
+  return request<StatsData>({ url: `/api/v1/me/stats?range=${range}` })
+}
+
+/** 知识掌握详情（知识点清单：掌握 / 薄弱 / 未学） */
+export function fetchKnowledgeDetail(quizId: string) {
+  return request<KnowledgeDetailData>({ url: `/api/v1/knowledge-base/${quizId}` })
+}
+
+/* ---------------- 错题本（阶段 6） ---------------- */
+
+/** 错题本：待清理错题列表 */
+export function fetchWrongbook() {
+  return request<WrongbookData>({ url: '/api/v1/wrongbook' })
+}
+
+/** 提交错题重做结果（答对即清理） */
+export function submitRedo(payload: RedoSubmitRequest) {
+  return request<RedoSubmitData>({ url: '/api/v1/wrongbook/redo', method: 'POST', data: payload })
+}
+
+/* ---------------- 用户资料（阶段 7） ---------------- */
+
+/** 更新用户资料（昵称 / 头像） */
+export function updateProfile(payload: ProfileUpdateRequest) {
+  return request<UserPublic>({ url: '/api/v1/me', method: 'PUT', data: payload })
+}
+
+/** 头像文件上传：返回可访问的相对 URL（/static/avatars/xxx.png） */
+export async function uploadAvatar(filePath: string): Promise<{ url: string }> {
+  const header: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    header.Authorization = `Bearer ${token}`
+  }
+
+  let response: Awaited<ReturnType<typeof Taro.uploadFile>>
+  try {
+    response = await Taro.uploadFile({
+      url: `${API_BASE_URL}/api/v1/me/avatar`,
+      filePath,
+      name: 'file',
+      header,
+      timeout: 60000,
+    })
+  } catch {
+    throw new ApiError(-1, '头像上传失败，请检查网络后重试')
+  }
+
+  let body: ApiResponse<{ url: string }> | null = null
+  try {
+    body = JSON.parse(response.data) as ApiResponse<{ url: string }>
+  } catch {
+    body = null
+  }
+  if (!body || body.code !== 0 || !body.data) {
+    throw new ApiError(body?.code ?? -1, body?.message ?? '头像上传失败，请重试')
+  }
+  return body.data
+}
+
+/** 把后端相对路径（/static/...）转为可访问的绝对地址 */
+export function resolveAssetUrl(path: string): string {
+  if (!path) return ''
+  if (/^https?:\/\//.test(path)) return path
+  return `${API_BASE_URL}${path}`
 }

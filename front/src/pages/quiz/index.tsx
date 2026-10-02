@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 
 import PageShell from '../../components/PageShell'
@@ -9,17 +9,13 @@ import Badge from '../../components/Badge'
 import Stamp from '../../components/Stamp'
 import SpeechBubble from '../../components/SpeechBubble'
 import InkButton from '../../components/InkButton'
+import QuestionPanel from '../../components/QuestionPanel'
 import { gradeAnswer } from '../../utils/grader'
 import { saveQuizProgress } from '../../services/api'
 import { XP_CORRECT, XP_WRONG, useQuizStore } from '../../store/quizStore'
 import type { Question } from '../../types'
 
 import './index.scss'
-
-/** 下划线占位:用于填空题干的渲染 */
-function splitByBlank(stem: string): string[] {
-  return stem.split('____')
-}
 
 export default function Quiz() {
   const quiz = useQuizStore((state) => state.quiz)
@@ -121,27 +117,6 @@ export default function Quiz() {
     })
   }
 
-  const isSelected = (key: string) => selected.includes(key)
-
-  /* ---------- 选项状态样式 ---------- */
-  const optionClass = (key: string) => {
-    if (phase === 'answering') {
-      return isSelected(key) ? 'opt opt--selected' : 'opt'
-    }
-    // feedback 阶段
-    if (question.type === 'multiple') {
-      const inAnswer = question.answer.includes(key)
-      if (inAnswer) return 'opt opt--correct'
-      if (isSelected(key)) return 'opt opt--wrong'
-      return 'opt'
-    }
-    // 单选
-    const inAnswer = question.answer.includes(key)
-    if (inAnswer) return 'opt opt--correct'
-    if (isSelected(key)) return 'opt opt--wrong'
-    return 'opt'
-  }
-
   const handleOptionClick = (key: string) => {
     if (phase !== 'answering') return
     if (question.type === 'single') {
@@ -152,33 +127,12 @@ export default function Quiz() {
     setSelected((prev) => (prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]))
   }
 
-  const judgeClass = (value: '对' | '错') => {
-    if (phase === 'answering') return ''
-    if (question.answer[0] === value) return 'judge-btn--correct'
-    if (isSelected(value)) return 'judge-btn--wrong'
-    return 'judge-btn--dim'
-  }
-
-  /* ---------- 题干渲染 ---------- */
-  const renderStem = () => {
-    if (question.type !== 'fill') {
-      return <Text>{question.stem}</Text>
-    }
-    const parts = splitByBlank(question.stem)
-    return (
-      <Text>
-        {parts.map((part, index) => (
-          <Text key={`${part}-${index}`}>
-            {part}
-            {index < parts.length - 1 && (
-              <Text className={phase === 'feedback' ? 'q-blank q-blank--done' : 'q-blank'}>
-                {phase === 'feedback' ? question.answer[index] || '' : '     '}
-              </Text>
-            )}
-          </Text>
-        ))}
-      </Text>
-    )
+  const handleFillInput = (index: number, value: string) => {
+    setFillInputs((prev) => {
+      const next = [...prev]
+      next[index] = value
+      return next
+    })
   }
 
   /* ---------- 提交按钮状态 ---------- */
@@ -207,80 +161,16 @@ export default function Quiz() {
         <Badge variant='xp'>⚡{xp}</Badge>
       </View>
 
-      {/* 题干卡 */}
-      <View className='q-card'>
-        <View className='q-card__flags'>
-          <Text className={`q-tag q-tag--${question.type}`}>
-            {question.type === 'single' && '单选'}
-            {question.type === 'multiple' && '多选'}
-            {question.type === 'judge' && '判断'}
-            {question.type === 'fill' && '填空'}
-          </Text>
-          <Text className='q-tag q-tag--level'>
-            难度 ·
-            {question.difficulty === 'easy' ? '易' : question.difficulty === 'medium' ? '中' : '难'}
-          </Text>
-        </View>
-        <View className='q-card__stem'>{renderStem()}</View>
-      </View>
-
-      {/* 答题区：单选/多选 */}
-      {(question.type === 'single' || question.type === 'multiple') && (
-        <View className='opt-list'>
-          {question.options.map((option) => (
-            <View key={option.key} className={optionClass(option.key)} hoverClass='none' onClick={() => handleOptionClick(option.key)}>
-              <View className={`opt__key ${question.type === 'multiple' ? 'opt__key--sq' : ''}`}>
-                <Text>{question.type === 'multiple' && isSelected(option.key) ? '✓' : option.key}</Text>
-              </View>
-              <Text className='opt__text'>{option.text}</Text>
-              {phase === 'feedback' && question.answer.includes(option.key) && <Text className='opt__flag'>✅</Text>}
-              {phase === 'feedback' && question.type !== 'multiple' && isSelected(option.key) && !question.answer.includes(option.key) && (
-                <Text className='opt__flag'>❌</Text>
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* 答题区：判断 */}
-      {question.type === 'judge' && (
-        <View className='judge-row'>
-          <View className={`judge-btn ${judgeClass('对')}`} onClick={() => phase === 'answering' && submit(['对'])}>
-            <Text className='judge-btn__sym'>✓</Text>
-            <Text className='judge-btn__label'>对</Text>
-          </View>
-          <View className={`judge-btn ${judgeClass('错')}`} onClick={() => phase === 'answering' && submit(['错'])}>
-            <Text className='judge-btn__sym'>✗</Text>
-            <Text className='judge-btn__label'>错</Text>
-          </View>
-        </View>
-      )}
-
-      {/* 答题区：填空 */}
-      {question.type === 'fill' && (
-        <View className='fill-card'>
-          <View className='fill-card__label'>
-            <Text>✍️ {phase === 'feedback' ? '你的答案' : '写下你的答案'}</Text>
-          </View>
-          {fillInputs.map((value, index) => (
-            <View key={index} className='fill-card__row'>
-              {fillInputs.length > 1 && <Text className='fill-card__index'>第 {index + 1} 空</Text>}
-              <Input
-                className='fill-card__input'
-                value={value}
-                disabled={phase === 'feedback'}
-                placeholder='填写答案…'
-                placeholderClass='fill-card__placeholder'
-                onInput={(event) => {
-                  const next = [...fillInputs]
-                  next[index] = event.detail.value
-                  setFillInputs(next)
-                }}
-              />
-            </View>
-          ))}
-        </View>
-      )}
+      {/* 答题面板（题干 + 作答区，与错题重做页共用） */}
+      <QuestionPanel
+        question={question}
+        phase={phase}
+        selected={selected}
+        fillInputs={fillInputs}
+        onClickOption={handleOptionClick}
+        onJudge={(value) => submit([value])}
+        onFillInput={handleFillInput}
+      />
 
       {/* 反馈卡 */}
       {phase === 'feedback' && (

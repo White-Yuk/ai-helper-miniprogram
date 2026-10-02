@@ -18,6 +18,9 @@ pymysql>=1.1
 PyJWT>=2.8
 cryptography>=42.0
 
+# ========== 文件上传（头像） ==========
+python-multipart>=0.0.9
+
 # ========== 测试（TDD） ==========
 pytest>=8.3
 pytest-asyncio>=0.25

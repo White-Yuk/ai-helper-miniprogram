@@ -1,0 +1,146 @@
+.wrongbook-page {
+  box-sizing: border-box;
+  padding: 0 14px 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 顶栏 ---------- */
+.wrongbook-top {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 14px;
+
+  &__title {
+    font-size: 20px;
+    font-weight: 900;
+    margin-left: 10px;
+    flex: 1;
+  }
+
+  &__count {
+    font-size: $fs-sm;
+    font-weight: 700;
+    border: $border-ink-thin;
+    border-radius: $radius-round;
+    background-color: $white;
+    padding: 3px 11px 4px;
+    flex-shrink: 0;
+  }
+}
+
+/* ---------- 状态 ---------- */
+.wrongbook-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 56px;
+
+  &__text {
+    font-size: $fs-md;
+    color: $muted;
+    font-weight: 700;
+    margin: 16px 0 18px;
+    text-align: center;
+  }
+}
+
+.wrongbook-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  border: $border-ink;
+  border-radius: $radius-lg;
+  background-color: $white;
+  box-shadow: $shadow-sm;
+  padding: 26px 18px;
+  margin-top: 20px;
+
+  &__title {
+    font-size: 19px;
+    font-weight: 900;
+    margin-top: 10px;
+  }
+
+  &__desc {
+    font-size: $fs-sm;
+    color: $muted;
+    font-weight: 600;
+    line-height: 1.7;
+    margin: 6px 0 16px;
+    text-align: center;
+  }
+}
+
+/* ---------- 错题卡 ---------- */
+.wrongbook-list {
+  flex: 1;
+}
+
+.wrong-card {
+  border: $border-ink-thin;
+  border-radius: $radius;
+  background-color: $white;
+  box-shadow: $shadow-sm;
+  padding: 11px 13px;
+  margin-bottom: 11px;
+
+  &__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  &__tag {
+    font-size: 10.5px;
+    font-weight: 900;
+    background-color: $yellow-soft;
+    border: 2px solid $ink;
+    border-radius: $radius-round;
+    padding: 1px 8px 2px;
+  }
+
+  &__count {
+    font-size: 11.5px;
+    font-weight: 900;
+    color: $red;
+  }
+
+  &__stem {
+    display: block;
+    font-size: $fs-sm;
+    font-weight: 700;
+    line-height: 1.6;
+    color: #3a3a3a;
+    margin-bottom: 8px;
+  }
+
+  &__foot {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__btn {
+    font-size: 12px;
+    font-weight: 900;
+    background-color: $yellow;
+    border: $border-ink-thin;
+    border-radius: $radius-round;
+    padding: 3px 12px 4px;
+    box-shadow: 2.5px 2.5px 0 $ink;
+
+    &--active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 $ink;
+    }
+  }
+}
+
+/* ---------- 底部 ---------- */
+.wrongbook-foot {
+  margin-top: auto;
+  padding-top: 12px;
+}

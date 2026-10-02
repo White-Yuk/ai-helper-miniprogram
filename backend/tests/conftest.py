@@ -157,3 +157,61 @@ def login_headers(client, device_id: str = "device_default") -> dict[str, str]:
     body = resp.json()
     assert body["code"] == 0
     return {"Authorization": f"Bearer {body['data']['token']}"}
+
+
+def login_user(client, device_id: str = "device_default") -> tuple[dict[str, str], int]:
+    """辅助：登录并返回 (headers, user_id)。"""
+    headers = login_headers(client, device_id)
+    resp = client.get("/api/v1/me", headers=headers)
+    assert resp.status_code == 200, resp.text
+    return headers, resp.json()["data"]["id"]
+
+
+# ---- 阶段 5-7 造数辅助（stats / mastery / wrongbook 测试共用） ----
+
+
+def make_quiz_record(session, user_id: int, questions: list, **overrides):
+    """直接构造一条已落库的闯关记录（绕过 LLM 链路）。"""
+    import uuid
+    from datetime import datetime
+
+    from app.models.records import Quiz
+
+    defaults = dict(
+        quiz_id=f"quiz_t{uuid.uuid4().hex[:10]}",
+        user_id=user_id,
+        title="RAG 入门",
+        summary="测试题库",
+        source_type="text",
+        questions=[q.model_dump() for q in questions],
+        status="doing",
+        current_index=0,
+        completed_at=None,
+    )
+    defaults.update(overrides)
+    quiz = Quiz(**defaults)
+    session.add(quiz)
+    session.commit()
+    session.refresh(quiz)
+    return quiz
+
+
+def make_answer_record(session, quiz, user_id: int, question, is_correct: bool, **overrides):
+    """直接构造一条作答明细。"""
+    from app.models.records import Answer
+
+    defaults = dict(
+        quiz_id=quiz.quiz_id,
+        user_id=user_id,
+        question_id=question.id,
+        question_type=question.type,
+        knowledge_point=question.knowledge_point,
+        selected_answers=question.answer if is_correct else ["Z"],
+        is_correct=is_correct,
+        duration_ms=1000,
+    )
+    defaults.update(overrides)
+    answer = Answer(**defaults)
+    session.add(answer)
+    session.commit()
+    return answer

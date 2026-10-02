@@ -1,11 +1,10 @@
-import { useEffect } from 'react'
-import { View, Text } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import { View, Text, Image } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
 
 import PageShell from '../../components/PageShell'
 import BackButton from '../../components/BackButton'
 import Mascot from '../../components/Mascot'
-import { ApiError } from '../../services/api'
+import { ApiError, resolveAssetUrl } from '../../services/api'
 import { useUserStore } from '../../store/userStore'
 
 import './index.scss'
@@ -17,10 +16,9 @@ const TOOLBOX = [
   { key: 'settings', icon: '⚙️', label: '设置' },
 ] as const
 
-const TOOLBOX_LAUNCHING: Record<(typeof TOOLBOX)[number]['key'], string> = {
+/** 尚未开放的入口（阶段 4 接入） */
+const TOOLBOX_LAUNCHING: Partial<Record<(typeof TOOLBOX)[number]['key'], string>> = {
   library: '知识库即将上线',
-  wrongbook: '错题本即将上线',
-  stats: '学习汇报即将上线',
   settings: '设置即将上线',
 }
 
@@ -29,21 +27,35 @@ export default function Profile() {
   const loading = useUserStore((state) => state.loading)
   const loadMe = useUserStore((state) => state.loadMe)
 
-  useEffect(() => {
+  // 每次页面显示时刷新（编辑资料返回后看到最新昵称 / 头像）
+  useDidShow(() => {
     loadMe().catch((error) => {
       const message = error instanceof ApiError ? error.message : '用户信息加载失败，请稍后重试'
       Taro.showToast({ title: message, icon: 'none' })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  })
 
   const stats = me?.stats
   const continueLearning = me?.continue_learning
 
   const nickname = me?.nickname || (loading ? '登录中…' : '未登录')
+  const avatarSrc = me?.avatar ? resolveAssetUrl(me.avatar) : ''
 
-  const handleToolClick = (key: keyof typeof TOOLBOX_LAUNCHING) => {
-    Taro.showToast({ title: TOOLBOX_LAUNCHING[key], icon: 'none' })
+  const handleToolClick = (key: (typeof TOOLBOX)[number]['key']) => {
+    if (key === 'wrongbook') {
+      Taro.navigateTo({ url: '/pages/wrongbook/index' })
+      return
+    }
+    if (key === 'stats') {
+      Taro.navigateTo({ url: '/pages/stats/index' })
+      return
+    }
+    Taro.showToast({ title: TOOLBOX_LAUNCHING[key] || '即将上线', icon: 'none' })
+  }
+
+  const editProfile = () => {
+    Taro.navigateTo({ url: '/pages/profile-edit/index' })
   }
 
   return (
@@ -54,14 +66,18 @@ export default function Profile() {
         <Text className='profile-top__title'>个人中心</Text>
       </View>
 
-      {/* 用户信息 */}
+      {/* 用户信息（点头像编辑资料） */}
       <View className='profile-head'>
-        <View className='profile-head__avatar'>
-          <Mascot size={62} />
+        <View className='profile-head__avatar' hoverClass='profile-head__avatar--active' onClick={editProfile}>
+          {avatarSrc ? (
+            <Image className='profile-head__avatar-img' src={avatarSrc} mode='aspectFill' />
+          ) : (
+            <Mascot size={62} />
+          )}
         </View>
         <View className='profile-head__info'>
           <Text className='profile-head__name'>{nickname}</Text>
-          <Text className='profile-head__desc'>已闯 {stats?.quiz_count ?? 0} 关</Text>
+          <Text className='profile-head__desc'>已闯 {stats?.quiz_count ?? 0} 关 · 点我编辑资料</Text>
         </View>
       </View>
 

@@ -1,0 +1,123 @@
+.profile-edit-page {
+  box-sizing: border-box;
+  padding: 0 14px 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 顶栏 ---------- */
+.profile-edit-top {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 14px;
+
+  &__title {
+    font-size: $fs-lg;
+    font-weight: 900;
+    margin-left: 10px;
+  }
+}
+
+/* ---------- 头像选择 ---------- */
+.edit-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 14px 0 20px;
+
+  &__btn {
+    width: 104px;
+    height: 104px;
+    box-sizing: border-box;
+    border: $border-ink;
+    border-radius: 50%;
+    background-color: $yellow;
+    box-shadow: $shadow-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    line-height: 1;
+    /* 覆盖小程序 button 默认样式 */
+    &::after {
+      border: none;
+    }
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__tip {
+    font-size: 11.5px;
+    color: $muted;
+    font-weight: 700;
+    margin-top: 10px;
+  }
+}
+
+/* ---------- 昵称 ---------- */
+.edit-field {
+  position: relative;
+  border: $border-ink;
+  border-radius: $radius;
+  background-color: $white;
+  box-shadow: $shadow-sm;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+
+  &__label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 900;
+    color: $muted;
+    margin-bottom: 8px;
+  }
+
+  &__input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 2.5px solid $ink;
+    border-radius: 10px;
+    background-color: $paper-2;
+    padding: 8px 12px;
+    font-size: $fs-base;
+    font-weight: 700;
+  }
+
+  &__placeholder {
+    color: #b1a897;
+    font-weight: 500;
+  }
+
+  &__count {
+    position: absolute;
+    right: 18px;
+    bottom: 20px;
+    font-size: 10.5px;
+    color: $muted;
+    font-weight: 700;
+  }
+}
+
+/* ---------- 提示 ---------- */
+.edit-tip {
+  display: flex;
+  align-items: center;
+  border: 2.5px dashed $ink;
+  border-radius: 13px;
+  padding: 10px 13px;
+  background-color: $yellow-soft;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* ---------- 底部 ---------- */
+.edit-foot {
+  margin-top: auto;
+  padding-top: 18px;
+}

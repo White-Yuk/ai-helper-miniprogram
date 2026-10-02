@@ -1,9 +1,9 @@
-"""登录相关请求 / 响应模型。"""
+"""登录 / 用户资料相关请求与响应模型。"""
 from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class LoginRequest(BaseModel):
@@ -60,3 +60,26 @@ class MeData(BaseModel):
     avatar: str = ""
     stats: UserStats = Field(default_factory=UserStats)
     continue_learning: ContinueLearning | None = None
+
+
+class ProfileUpdateRequest(BaseModel):
+    """PUT /me 请求：昵称 / 头像至少更新一项。"""
+
+    nickname: str | None = Field(default=None, max_length=32, description="昵称（1-32 字符）")
+    avatar: str | None = Field(default=None, max_length=500, description="头像 URL（由上传接口返回）")
+
+    @field_validator("nickname")
+    @classmethod
+    def strip_nickname(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("昵称不能为空")
+        return value
+
+    @model_validator(mode="after")
+    def require_any(self) -> "ProfileUpdateRequest":
+        if self.nickname is None and self.avatar is None:
+            raise ValueError("至少需要提供昵称或头像")
+        return self
