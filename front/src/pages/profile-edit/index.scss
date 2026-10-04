@@ -78,15 +78,27 @@
     margin-bottom: 8px;
   }
 
-  &__input {
-    width: 100%;
+  /* 输入框外观容器：微信原生 input 存在平台样式差异，
+     边框/背景/圆角/高度/内边距全部由普通 View 保证，input 本体保持最简 */
+  &__box {
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    height: 52px;
     border: 2.5px solid $ink;
     border-radius: 10px;
     background-color: $paper-2;
-    padding: 8px 12px;
-    font-size: $fs-base;
-    font-weight: 700;
+    padding: 0 14px;
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.4;
+    font-weight: 900;
+    color: $ink;
+    background-color: transparent;
   }
 
   &__placeholder {
@@ -95,9 +107,8 @@
   }
 
   &__count {
-    position: absolute;
-    right: 18px;
-    bottom: 20px;
+    flex-shrink: 0;
+    margin-left: 8px;
     font-size: 10.5px;
     color: $muted;
     font-weight: 700;

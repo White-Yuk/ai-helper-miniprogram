@@ -7,7 +7,7 @@
  */
 import Taro from '@tarojs/taro'
 
-import { devLogin, getToken, loginWithCode, onUnauthorized, setToken } from './api'
+import { devLogin, getToken, loginWithCode, onUnauthorized, registerEnsureLogin, setToken } from './api'
 
 const DEVICE_KEY = 'device_id'
 
@@ -73,3 +73,6 @@ async function doLogin(): Promise<void> {
 onUnauthorized(() => {
   void ensureLogin(true)
 })
+
+// 提供给请求层：无 token / token 失效时先确保完成登录（重登成功后请求自动重试一次）
+registerEnsureLogin(ensureLogin)

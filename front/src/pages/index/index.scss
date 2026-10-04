@@ -4,13 +4,12 @@
   min-height: 100vh;
 }
 
-/* ---------- 顶栏（右侧预留微信胶囊区域） ---------- */
+/* ---------- 顶栏（右侧避让微信胶囊：由 getCapsuleInset 动态注入） ---------- */
 .home-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 4px 0 14px;
-  padding-right: 92px;
 }
 
 .logo-sticker {
@@ -49,10 +48,16 @@
   font-size: 12px;
   font-weight: 900;
   box-shadow: 3px 3px 0 $ink;
+  overflow: hidden;
 
   &--active {
     transform: translate(2px, 2px);
     box-shadow: 1px 1px 0 $ink;
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
   }
 }
 
@@ -130,6 +135,7 @@
 
 /* ---------- 输入卡 ---------- */
 .input-card {
+  box-sizing: border-box;
   border: $border-ink;
   border-radius: $radius-lg;
   background-color: $white;
@@ -137,8 +143,10 @@
   padding: 12px 15px;
   margin-bottom: 14px;
 
+  /* 原生 textarea 需显式限制宽度，避免个别机型上用默认宽度导致右侧超出屏幕 */
   &__textarea {
     width: 100%;
+    max-width: 100%;
     min-height: 46px;
     box-sizing: border-box;
     font-size: $fs-md;

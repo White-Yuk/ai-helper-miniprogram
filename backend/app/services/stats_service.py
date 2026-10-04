@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import BizException
+from app.models.auth import UserStats
 from app.models.records import Answer, Quiz
 from app.models.stats import (
     DomainStat,
@@ -29,6 +30,18 @@ DOMAIN_LIMIT = 5  # 领域掌握度最多展示的闯关数
 
 def _calc_accuracy(correct: int, total: int) -> int:
     return round(correct / total * 100) if total else 0
+
+
+def get_user_overview(session: Session, user_id: int) -> UserStats:
+    """个人中心统计三宫格：闯关数（含进行中）/ 累计答题数 / 平均正确率（0-100）。"""
+    quiz_count = len(session.scalars(select(Quiz.id).where(Quiz.user_id == user_id)).all())
+    answers = session.scalars(select(Answer).where(Answer.user_id == user_id)).all()
+    correct = sum(1 for item in answers if item.is_correct)
+    return UserStats(
+        quiz_count=quiz_count,
+        answered_count=len(answers),
+        avg_accuracy=_calc_accuracy(correct, len(answers)),
+    )
 
 
 def get_user_stats(session: Session, user_id: int, range_: str) -> StatsData:

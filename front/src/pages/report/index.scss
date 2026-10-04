@@ -120,6 +120,11 @@
   line-height: 1.75;
 
   &__strong {
+    color: $green-deep;
+    font-weight: 900;
+  }
+
+  &__wrong {
     color: $red;
     font-weight: 900;
   }

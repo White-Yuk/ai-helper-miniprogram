@@ -75,7 +75,7 @@ export default function Poster() {
 
         <View className='poster__stats'>
           <View className='poster__stat'>
-            <Text className='poster__stat-value poster__stat-value--red'>{accuracy}%</Text>
+            <Text className='poster__stat-value poster__stat-value--green'>{accuracy}%</Text>
             <Text className='poster__stat-label'>正确率</Text>
           </View>
           <View className='poster__stat'>

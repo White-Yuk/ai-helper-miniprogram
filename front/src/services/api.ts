@@ -46,6 +46,8 @@ interface RequestOptions {
   data?: unknown
   /** 允许 data 为 null（如“无未完成闯关”是合法空态） */
   allowNull?: boolean
+  /** 跳过「确保登录」与自动重登（供登录 / 健康检查等接口使用，防止递归） */
+  skipAuth?: boolean
 }
 
 /* ---------------- 登录态（token）管理 ---------------- */
@@ -80,7 +82,30 @@ export function onUnauthorized(handler: ReauthHandler): void {
   reauthHandler = handler
 }
 
+type EnsureLoginFn = (force?: boolean) => Promise<void>
+let ensureLoginImpl: EnsureLoginFn | null = null
+
+/**
+ * 由 auth 服务注册「确保登录」实现（避免模块循环依赖）。
+ * 请求层在无 token / token 失效时先完成登录，从源头避免 401。
+ */
+export function registerEnsureLogin(fn: EnsureLoginFn): void {
+  ensureLoginImpl = fn
+}
+
 async function request<T>(options: RequestOptions): Promise<T> {
+  // 需要登录态的接口：先确保登录完成（已有 token 时零开销；登录失败不阻塞，由 4003 分支兜底）
+  if (!options.skipAuth && ensureLoginImpl) {
+    try {
+      await ensureLoginImpl()
+    } catch {
+      // 登录失败：继续发起请求，交由响应侧处理
+    }
+  }
+  return requestOnce<T>(options, true)
+}
+
+async function requestOnce<T>(options: RequestOptions, allowReauthRetry: boolean): Promise<T> {
   const header: Record<string, string> = { 'Content-Type': 'application/json' }
   const token = getToken()
   if (token) {
@@ -108,8 +133,16 @@ async function request<T>(options: RequestOptions): Promise<T> {
   if (!body || body.code !== 0 || (body.data == null && !options.allowNull)) {
     const code = body?.code ?? -1
     if (code === 4003) {
-      // 登录失效：清除本地 token，并触发一次静默重登（下次请求生效）
+      // 登录失效：清除本地 token，强制重新登录后自动重试一次（避免页面直接报“未登录或登录已过期”）
       clearToken()
+      if (allowReauthRetry && !options.skipAuth && ensureLoginImpl) {
+        try {
+          await ensureLoginImpl(true)
+          return await requestOnce<T>(options, false)
+        } catch {
+          // 重登失败：走下方统一抛错
+        }
+      }
       reauthHandler?.()
     }
     throw new ApiError(code, body?.message ?? '请求失败，请稍后重试')
@@ -119,7 +152,10 @@ async function request<T>(options: RequestOptions): Promise<T> {
 
 /** 健康检查 */
 export function checkHealth() {
-  return request<{ status: string; app_name: string; version: string }>({ url: '/api/v1/health' })
+  return request<{ status: string; app_name: string; version: string }>({
+    url: '/api/v1/health',
+    skipAuth: true,
+  })
 }
 
 /** 生成闯关题库 */
@@ -136,12 +172,17 @@ export function generateReport(payload: ReportGenerateRequest) {
 
 /** 微信登录：Taro.login() 的 code 换取 token */
 export function loginWithCode(code: string) {
-  return request<LoginData>({ url: '/api/v1/auth/login', method: 'POST', data: { code } })
+  return request<LoginData>({ url: '/api/v1/auth/login', method: 'POST', data: { code }, skipAuth: true })
 }
 
 /** 开发态模拟登录（后端开启 AUTH_MOCK_ENABLED 时可用） */
 export function devLogin(deviceId: string) {
-  return request<LoginData>({ url: '/api/v1/auth/dev-login', method: 'POST', data: { device_id: deviceId } })
+  return request<LoginData>({
+    url: '/api/v1/auth/dev-login',
+    method: 'POST',
+    data: { device_id: deviceId },
+    skipAuth: true,
+  })
 }
 
 /** 当前登录用户信息（含统计与续答） */

@@ -120,19 +120,22 @@ export default function ProfileEdit() {
         <Text className='edit-avatar__tip'>点击头像更换（支持 JPG / PNG，2MB 以内）</Text>
       </View>
 
-      {/* 昵称输入 */}
+      {/* 昵称输入（外观由外层 View 容器保证，input 本体保持最简，规避原生组件样式差异） */}
       <View className='edit-field'>
         <Text className='edit-field__label'>昵称</Text>
-        <Input
-          className='edit-field__input'
-          type={process.env.TARO_ENV === 'weapp' ? 'nickname' : 'text'}
-          value={nickname}
-          maxlength={32}
-          placeholder='给自己取个响亮的名字'
-          placeholderClass='edit-field__placeholder'
-          onInput={(event) => setNickname(event.detail.value)}
-        />
-        <Text className='edit-field__count'>{nickname.length}/32</Text>
+        <View className='edit-field__box'>
+          <Input
+            className='edit-field__input'
+            type={process.env.TARO_ENV === 'weapp' ? 'nickname' : 'text'}
+            value={nickname}
+            maxlength={32}
+            alwaysEmbed
+            placeholder='给自己取个响亮的名字'
+            placeholderClass='edit-field__placeholder'
+            onInput={(event) => setNickname(event.detail.value)}
+          />
+          <Text className='edit-field__count'>{nickname.length}/32</Text>
+        </View>
       </View>
 
       <View className='edit-tip'>

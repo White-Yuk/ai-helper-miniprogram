@@ -18,6 +18,7 @@
     font-size: $fs-base;
     font-weight: 900;
     line-height: 1.62;
+    word-break: break-all;
   }
 }
 
@@ -108,6 +109,8 @@
 
   &__text {
     flex: 1;
+    min-width: 0;
+    word-break: break-all;
   }
 
   &__flag {

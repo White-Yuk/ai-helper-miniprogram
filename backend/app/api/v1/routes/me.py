@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.core.response import success
-from app.models.auth import MeData, ProfileUpdateRequest, UserPublic, UserStats
+from app.models.auth import MeData, ProfileUpdateRequest, UserPublic
 from app.models.user import User
 from app.services import record_service, stats_service, user_service
 from app.utils import files
@@ -29,7 +29,7 @@ def me_route(user: User = Depends(get_current_user), session: Session = Depends(
             id=user.id,
             nickname=user.nickname,
             avatar=user.avatar or "",
-            stats=UserStats(),  # 统计三宫格：阶段 4 接入真实数据
+            stats=stats_service.get_user_overview(session, user.id),  # 统计三宫格：真实数据
             continue_learning=record_service.get_continue_summary(session, user.id),
         )
     )

@@ -8,6 +8,7 @@ import Mascot from '../../components/Mascot'
 import InkButton from '../../components/InkButton'
 import { fetchWrongbook } from '../../services/api'
 import type { WrongbookData } from '../../types'
+import { getCapsuleInset } from '../../utils/navInset'
 
 import './index.scss'
 
@@ -49,8 +50,8 @@ export default function Wrongbook() {
 
   return (
     <PageShell className='wrongbook-page'>
-      {/* 顶栏 */}
-      <View className='wrongbook-top'>
+      {/* 顶栏（右侧动态避开微信胶囊按钮：防止待清理徽章被遮挡） */}
+      <View className='wrongbook-top' style={{ paddingRight: getCapsuleInset() }}>
         <BackButton />
         <Text className='wrongbook-top__title'>我的错题本</Text>
         {status === 'success' && data && data.total > 0 && (

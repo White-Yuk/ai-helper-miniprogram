@@ -131,6 +131,10 @@
     &--red {
       color: $red;
     }
+
+    &--green {
+      color: $green-deep;
+    }
   }
 
   &__stat-label {

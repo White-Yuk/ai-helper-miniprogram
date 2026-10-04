@@ -10,6 +10,7 @@ import InkButton from '../../components/InkButton'
 import { ApiError, generateReport, submitQuiz } from '../../services/api'
 import { useQuizStore } from '../../store/quizStore'
 import type { ReportData } from '../../types'
+import { getCapsuleInset } from '../../utils/navInset'
 
 import './index.scss'
 
@@ -100,8 +101,8 @@ export default function Report() {
 
       {status === 'success' && report && quiz && (
         <View className='report-body'>
-          {/* 头部 */}
-          <View className='report-head'>
+          {/* 头部（右侧动态避开微信胶囊按钮） */}
+          <View className='report-head' style={{ paddingRight: getCapsuleInset() }}>
             <View className='report-head__left'>
               <BackButton onClick={() => Taro.navigateBack()} />
             </View>
@@ -127,7 +128,8 @@ export default function Report() {
             <View className='ring-copy'>
               <Text>本关正确率 </Text>
               <Text className='ring-copy__strong'>{report.accuracy}%</Text>
-              <Text>{'\n'}连对最高 ×{useQuizStore.getState().maxCombo} · 错 {wrongCount} 题</Text>
+              <Text>{'\n'}连对最高 ×{useQuizStore.getState().maxCombo} · </Text>
+              <Text className='ring-copy__wrong'>错 {wrongCount} 题</Text>
             </View>
           </View>
 

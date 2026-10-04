@@ -11,6 +11,7 @@ import SpeechBubble from '../../components/SpeechBubble'
 import InkButton from '../../components/InkButton'
 import QuestionPanel from '../../components/QuestionPanel'
 import { gradeAnswer } from '../../utils/grader'
+import { getCapsuleInset } from '../../utils/navInset'
 import { saveQuizProgress } from '../../services/api'
 import { XP_CORRECT, XP_WRONG, useQuizStore } from '../../store/quizStore'
 import type { Question } from '../../types'
@@ -146,13 +147,13 @@ export default function Quiz() {
 
   return (
     <PageShell className='quiz-page'>
-      {/* 顶栏 */}
-      <View className='quiz-top'>
+      {/* 顶栏（右侧动态避开微信胶囊按钮：防止 ⚡XP 徽章与主题名被遮挡） */}
+      <View className='quiz-top' style={{ paddingRight: getCapsuleInset() }}>
         <BackButton onClick={handleBack} />
         <View className='quiz-top__main'>
           <View className='quiz-top__txt'>
             <Text>
-              第 {current + 1} 关 / 共 {total} 关
+              第 {current + 1} 题 / 共 {total} 题
             </Text>
             <Text className='quiz-top__topic'>{quiz.title}</Text>
           </View>

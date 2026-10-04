@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { View, Text, Textarea } from '@tarojs/components'
+import { View, Text, Textarea, Image } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 
 import PageShell from '../../components/PageShell'
 import Mascot from '../../components/Mascot'
 import InkButton from '../../components/InkButton'
-import { fetchUnfinishedQuiz } from '../../services/api'
+import { fetchUnfinishedQuiz, resolveAssetUrl } from '../../services/api'
 import { ensureLogin } from '../../services/auth'
 import { useQuizStore } from '../../store/quizStore'
+import { useUserStore } from '../../store/userStore'
 import type { QuestionType, QuizDifficulty, UnfinishedQuizData } from '../../types'
+import { getCapsuleInset } from '../../utils/navInset'
 
 import './index.scss'
 
@@ -38,6 +40,8 @@ function buildResumeSubtitle(data: UnfinishedQuizData): string {
 }
 
 export default function Index() {
+  const me = useUserStore((state) => state.me)
+  const loadMe = useUserStore((state) => state.loadMe)
   const [userInput, setUserInput] = useState('')
   const [sheetVisible, setSheetVisible] = useState(false)
   const [types, setTypes] = useState<QuestionType[]>(['single', 'multiple', 'judge'])
@@ -59,6 +63,9 @@ export default function Index() {
       .catch(() => {
         // 未登录 / 网络异常：不展示卡片，不打扰主流程
       })
+
+    // 刷新用户信息（右上角头像展示；失败静默，保持“我”字占位）
+    loadMe().catch(() => {})
   })
 
   /** 继续上次没打完的闯关（阶段 3） */
@@ -113,14 +120,18 @@ export default function Index() {
 
   return (
     <PageShell className='index-page'>
-      {/* 顶栏（右侧避开微信胶囊按钮区域） */}
-      <View className='home-top'>
+      {/* 顶栏（右侧动态避开微信胶囊按钮区域） */}
+      <View className='home-top' style={{ paddingRight: getCapsuleInset() }}>
         <View className='logo-sticker'>
           <Text className='logo-sticker__ai'>AI</Text>
           <Text className='logo-sticker__text'>闯关学习</Text>
         </View>
         <View className='avatar-dot' hoverClass='avatar-dot--active' onClick={handleAvatar}>
-          <Text>我</Text>
+          {me?.avatar ? (
+            <Image className='avatar-dot__img' src={resolveAssetUrl(me.avatar)} mode='aspectFill' />
+          ) : (
+            <Text>我</Text>
+          )}
         </View>
       </View>
 
