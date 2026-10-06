@@ -34,6 +34,24 @@ export interface QuizData {
   title: string
   summary: string
   questions: Question[]
+  /** 知识获取来源（已启用但未使用资料时为空数组 / 未启用为 null） */
+  sources?: QuizSource[] | null
+  /** 知识溯源轨迹摘要 */
+  agent_trace?: AgentTrace | null
+}
+
+/** 知识来源条目 */
+export interface QuizSource {
+  title: string
+  url: string
+}
+
+/** 知识获取轨迹摘要（知识溯源） */
+export interface AgentTrace {
+  search_count: number
+  extract_count: number
+  queries: string[]
+  doc_count: number
 }
 
 export interface AnswerRecord {
@@ -240,4 +258,32 @@ export interface RedoSubmitData {
 export interface ProfileUpdateRequest {
   nickname?: string
   avatar?: string
+}
+
+/* ---------------- 异步生成任务（知识获取增强） ---------------- */
+
+export type QuizTaskStatus = 'pending' | 'running' | 'done' | 'failed'
+
+/** 任务执行步骤（实时轮询渲染） */
+export interface TaskStep {
+  key: string
+  label: string
+  detail: string
+  state: 'doing' | 'done'
+  ts: string
+}
+
+/** POST /quiz/tasks 创建任务响应 */
+export interface QuizTaskCreated {
+  task_id: string
+  status: QuizTaskStatus
+}
+
+/** GET /quiz/tasks/{task_id} 查询任务响应 */
+export interface QuizTaskData {
+  task_id: string
+  status: QuizTaskStatus
+  steps: TaskStep[]
+  result: QuizData | null
+  error: { code: number; message: string } | null
 }

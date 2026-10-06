@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -18,6 +19,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import BizException
 from app.core.response import error
+from app.services import task_service
 from app.utils import files
 
 logging.basicConfig(
@@ -26,12 +28,27 @@ logging.basicConfig(
 )
 
 
+def _startup_housekeeping() -> None:
+    """应用启动兜底（测试可通过 patch 本函数跳过）。
+
+    进程中断后残留的 pending / running 生成任务标记为 failed，避免客户端无限轮询。
+    """
+    task_service.mark_stale_tasks_failed()
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    _startup_housekeeping()
+    yield
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title=settings.app_name,
         version=settings.version,
         description="AI 闯关学习小程序后端：题库生成 / 复盘报告生成",
+        lifespan=_lifespan,
     )
 
     # 跨域（小程序开发者工具 / H5 调试用）

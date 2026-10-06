@@ -12,14 +12,14 @@ from langchain_openai import ChatOpenAI
 from app.core.config import get_settings
 
 
-def create_chat_model(temperature: float | None = None) -> ChatOpenAI:
-    """创建 DeepSeek 对话模型实例。"""
+def create_chat_model(temperature: float | None = None, timeout: float | None = None) -> ChatOpenAI:
+    """创建 DeepSeek 对话模型实例（temperature / timeout 可按调用方覆盖）。"""
     settings = get_settings()
     return ChatOpenAI(
         model=settings.deepseek_model,
         base_url=settings.deepseek_base_url,
         api_key=settings.deepseek_api_key or "sk-not-configured",
         temperature=settings.quiz_temperature if temperature is None else temperature,
-        timeout=settings.llm_timeout_seconds,
+        timeout=settings.llm_timeout_seconds if timeout is None else timeout,
         max_retries=0,
     )

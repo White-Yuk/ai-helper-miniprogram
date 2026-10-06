@@ -82,6 +82,22 @@ class QuizData(BaseModel):
     questions: list[Question] = Field(min_length=1)
 
 
+class QuizSource(BaseModel):
+    """知识来源条目：检索 / 提取结果中的标题与链接（来自真实工具结果）。"""
+
+    title: str = Field(min_length=1)
+    url: str = Field(min_length=1)
+
+
+class AgentTrace(BaseModel):
+    """知识获取轨迹摘要（“知识溯源”展示数据）。"""
+
+    search_count: int = 0
+    extract_count: int = 0
+    queries: list[str] = Field(default_factory=list)
+    doc_count: int = 0
+
+
 class QuizGenerateData(BaseModel):
     """题库生成接口的业务数据。"""
 
@@ -89,3 +105,13 @@ class QuizGenerateData(BaseModel):
     title: str
     summary: str
     questions: list[Question]
+    # 知识获取链路产物（可选）：未启用 / 未使用资料时为 None
+    sources: list[QuizSource] | None = None
+    agent_trace: AgentTrace | None = None
+
+
+class ReliabilityAssessment(BaseModel):
+    """知识可靠性评估结果（出题守卫，见 design.md D6）。"""
+
+    reliable: bool = Field(description="模型对该主题的知识是否可靠（足以出题且不误导学习者）")
+    reason: str = Field(min_length=1, description="一句话原因")

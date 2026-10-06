@@ -12,6 +12,8 @@ import type {
   QuizProgressRequest,
   QuizSubmitData,
   QuizSubmitRequest,
+  QuizTaskCreated,
+  QuizTaskData,
   RedoSubmitData,
   RedoSubmitRequest,
   ReportData,
@@ -119,7 +121,9 @@ async function requestOnce<T>(options: RequestOptions, allowReauthRetry: boolean
       method: options.method ?? 'GET',
       data: options.data,
       header,
-      timeout: 90000, // AI 生成耗时较长，放宽超时
+      // 微信小程序 wx.request 超时上限为 60s（硬性，超出被静默截断）→ 长耗时生成
+      // 不依赖单次长请求（已改为「创建任务 + 轮询短查询」）；此值实际仅对 H5 端生效。
+      timeout: 90000,
     })
   } catch (error) {
     const errMsg = (error as { errMsg?: string } | undefined)?.errMsg || ''
@@ -158,9 +162,64 @@ export function checkHealth() {
   })
 }
 
-/** 生成闯关题库 */
+/** 生成闯关题库（同步；保留供 H5 / 调试，小程序端请使用任务接口） */
 export function generateQuiz(payload: QuizGenerateRequest) {
   return request<QuizData>({ url: '/api/v1/quiz/generate', method: 'POST', data: payload })
+}
+
+/* ---------------- 异步生成任务（知识获取增强） ---------------- */
+
+/** 创建生成任务：立即返回 task_id（异步任务 + 轮询流程的第一步） */
+export function createQuizTask(payload: QuizGenerateRequest) {
+  return request<QuizTaskCreated>({ url: '/api/v1/quiz/tasks', method: 'POST', data: payload })
+}
+
+/** 查询生成任务（状态 / 步骤 / 结果 / 错误） */
+export function getQuizTask(taskId: string) {
+  return request<QuizTaskData>({ url: `/api/v1/quiz/tasks/${taskId}` })
+}
+
+export interface WaitQuizTaskOptions {
+  /** 轮询间隔（默认 2000ms） */
+  intervalMs?: number
+  /** 最大轮询次数（默认 150 次 ≈ 5 分钟） */
+  maxAttempts?: number
+  /** 每次拿到任务后的回调（实时渲染步骤；抛错会中断轮询） */
+  onTick?: (task: QuizTaskData) => void
+  /** 返回 true 时中断轮询（页面卸载场景） */
+  isCancelled?: () => boolean
+}
+
+/**
+ * 轮询任务直至终态：done 返回题库数据；failed 抛 ApiError（携带任务错误码，如 4006 知识盲区）。
+ * 注意：轮询中的每次请求都是短查询（不依赖小程序的 60s 超时上限）。
+ */
+export async function waitQuizTask(taskId: string, options: WaitQuizTaskOptions = {}): Promise<QuizData> {
+  const intervalMs = options.intervalMs ?? 2000
+  const maxAttempts = options.maxAttempts ?? 150
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (options.isCancelled?.()) {
+      throw new ApiError(-5, '轮询已取消')
+    }
+    const task = await getQuizTask(taskId)
+    options.onTick?.(task)
+
+    if (task.status === 'done') {
+      if (!task.result) {
+        throw new ApiError(-4, '任务数据异常，请重试一下')
+      }
+      return task.result
+    }
+    if (task.status === 'failed') {
+      throw new ApiError(task.error?.code ?? -4, task.error?.message ?? '生成失败了，请重试一下')
+    }
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, intervalMs)
+    })
+  }
+  throw new ApiError(-3, '生成超时了，请重试一下')
 }
 
 /** 生成复盘报告 */

@@ -89,6 +89,32 @@ def client(app):
         yield c
 
 
+# ---- 测试隔离（避免触及本机 .env / 真实数据库） ----
+
+
+@pytest.fixture(autouse=True)
+def _isolate_tavily_key(monkeypatch):
+    """默认清空 TAVILY_API_KEY：防止读到本机 .env 的真实 Key 触发真实网络调用。
+
+    需要启用知识获取的用例自行 setenv + get_settings.cache_clear()。
+    """
+    monkeypatch.setenv("TAVILY_API_KEY", "")
+
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _skip_startup_housekeeping(monkeypatch):
+    """跳过应用启动兜底任务：测试不连接真实数据库（专项单测直接调用服务函数）。"""
+    import app.main
+
+    monkeypatch.setattr(app.main, "_startup_housekeeping", lambda: None)
+
+
 # ---- 数据库测试夹具（阶段 1+） ----
 # 说明：测试统一使用 SQLite 临时文件库（不依赖本机 MySQL，保证随时可跑）；
 # 业务代码不写 MySQL 专属 SQL，真实库兼容性由 scripts/check_db.py 与联调验证。

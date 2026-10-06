@@ -10,6 +10,9 @@ pydantic-settings>=2.7
 langchain>=1.0
 langchain-openai>=1.0
 
+# ========== 知识获取（Tavily 联网检索 / 网页提取） ==========
+langchain-tavily>=0.2
+
 # ========== 数据库（MySQL） ==========
 sqlalchemy>=2.0
 pymysql>=1.1

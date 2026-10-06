@@ -5,7 +5,10 @@ import pytest
 
 from app.core.config import get_settings
 from app.core.exceptions import BizException
-from app.models.quiz import QuizData, QuizGenerateRequest
+from app.models.quiz import AgentTrace, QuizData, QuizGenerateRequest, QuizSource, ReliabilityAssessment
+from app.prompts.quiz_prompt import NO_REFERENCE_CONTEXT
+from app.services import quiz_service
+from app.services.knowledge_agent import KnowledgeResult
 from app.services.quiz_service import (
     QuizValidationError,
     generate_quiz,
@@ -162,3 +165,163 @@ class TestGenerateQuiz:
 
         assert exc_info.value.code == 4001
         assert chain.call_count == settings.llm_max_retries + 1
+
+
+# ---- 带知识获取的编排（任务 6.1）：Agent / 评估器 / 步骤回调注入 ----
+
+
+def make_knowledge(**overrides) -> KnowledgeResult:
+    defaults = dict(
+        summary="资料摘要：RAG（检索增强生成）通过检索外部知识补充大模型回答。",
+        sources=[{"title": "RAG 导论", "url": "https://a.example/rag"}],
+        trace={"search_count": 1, "extract_count": 0, "queries": ["RAG 是什么"], "doc_count": 3},
+        has_valid_content=True,
+    )
+    defaults.update(overrides)
+    return KnowledgeResult(**defaults)
+
+
+def make_empty_knowledge(**overrides) -> KnowledgeResult:
+    defaults = dict(
+        summary="",
+        sources=[],
+        trace={"search_count": 0, "extract_count": 0, "queries": [], "doc_count": 0},
+        has_valid_content=False,
+    )
+    defaults.update(overrides)
+    return KnowledgeResult(**defaults)
+
+
+class TestGenerateQuizWithGrounding:
+    """行为矩阵（design D7）：未配置 / 有内容 / 无内容（可靠 / 不可靠）/ 降级 / URL。"""
+
+    def _enable(self, monkeypatch, knowledge: KnowledgeResult) -> None:
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda: True)
+        monkeypatch.setattr(quiz_service, "acquire_knowledge", lambda text, on_step=None: knowledge)
+
+    def test_disabled_passthrough_without_agent(self, sample_quiz_data, monkeypatch):
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda: False)
+        called: list = []
+        monkeypatch.setattr(
+            quiz_service, "acquire_knowledge", lambda *a, **k: called.append(1) or make_empty_knowledge()
+        )
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: (_ for _ in ()).throw(AssertionError("未配置不应评估"))
+        )
+        chain = FakeChain([sample_quiz_data])
+        steps: list = []
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain, on_step=lambda *a: steps.append(a))
+
+        assert data.sources is None
+        assert data.agent_trace is None
+        assert called == []
+        assert [s[0] for s in steps] == ["stage:generate", "stage:generate", "stage:finish"]
+        assert chain.calls[0]["reference_context"] == NO_REFERENCE_CONTEXT
+
+    def test_valid_content_injects_and_attaches(self, sample_quiz_data, monkeypatch):
+        knowledge = make_knowledge()
+        captured: dict = {}
+
+        def fake_acquire(text, on_step=None):
+            captured["text"] = text
+            captured["on_step"] = on_step
+            return knowledge
+
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda: True)
+        monkeypatch.setattr(quiz_service, "acquire_knowledge", fake_acquire)
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: (_ for _ in ()).throw(AssertionError("有资料不应评估"))
+        )
+        chain = FakeChain([sample_quiz_data])
+        steps: list = []
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain, on_step=lambda *a: steps.append(a))
+
+        assert data.sources == [QuizSource(title="RAG 导论", url="https://a.example/rag")]
+        assert data.agent_trace == AgentTrace(search_count=1, extract_count=0, queries=["RAG 是什么"], doc_count=3)
+        assert chain.calls[0]["reference_context"] == knowledge.summary
+        assert captured["text"] == "什么是 RAG？"
+        assert callable(captured["on_step"])  # 步骤回穿透传给 Agent（工具级步骤）
+        assert [s[0] for s in steps] == ["stage:judge", "stage:generate", "stage:generate", "stage:finish"]
+
+    def test_no_content_reliable_generates_pure(self, sample_quiz_data, monkeypatch):
+        self._enable(monkeypatch, make_empty_knowledge())
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: ReliabilityAssessment(reliable=True, reason="常见知识")
+        )
+        chain = FakeChain([sample_quiz_data])
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain)
+
+        assert data.sources == []
+        assert data.agent_trace is None
+        assert chain.calls[0]["reference_context"] == NO_REFERENCE_CONTEXT
+
+    def test_no_content_unreliable_raises_4006(self, monkeypatch):
+        self._enable(monkeypatch, make_empty_knowledge())
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: ReliabilityAssessment(reliable=False, reason="可能是新概念")
+        )
+        chain = FakeChain([QuizData(title="x", summary="x", questions=[make_question("q1", "single")])])
+
+        with pytest.raises(BizException) as err:
+            quiz_service.generate_quiz_with_grounding(make_request(), chain)
+
+        assert err.value.code == 4006
+        assert chain.call_count == 0  # 不出题
+
+    def test_assessor_failure_degrades_to_pure_generation(self, sample_quiz_data, monkeypatch):
+        self._enable(monkeypatch, make_empty_knowledge())
+
+        def _raise(_t):
+            raise RuntimeError("assessor down")
+
+        monkeypatch.setattr(quiz_service, "assess_reliability", _raise)
+        chain = FakeChain([sample_quiz_data])
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain)
+
+        assert chain.call_count == 1
+        assert data.sources == []
+
+    def test_agent_timeout_degrades_into_assess_flow(self, sample_quiz_data, monkeypatch):
+        # Agent 超时 → 空结果（同“无有效内容”分支）→ 评估可靠 → 正常出题
+        self._enable(monkeypatch, make_empty_knowledge())
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: ReliabilityAssessment(reliable=True, reason="ok")
+        )
+        chain = FakeChain([sample_quiz_data])
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain)
+
+        assert data.title == sample_quiz_data.title
+
+    def test_url_success_attaches_extract_trace(self, sample_quiz_data, monkeypatch):
+        knowledge = make_knowledge(
+            sources=[{"title": "文章", "url": "https://page.example/post"}],
+            trace={"search_count": 0, "extract_count": 1, "queries": [], "doc_count": 1},
+        )
+        self._enable(monkeypatch, knowledge)
+        chain = FakeChain([sample_quiz_data])
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(user_input="https://page.example/post"), chain)
+
+        assert data.agent_trace.extract_count == 1
+        assert data.sources[0].url == "https://page.example/post"
+
+    def test_no_content_with_activity_keeps_trace(self, sample_quiz_data, monkeypatch):
+        # 无资料但有检索活动（如检索 0 条）→ 保留轨迹供溯源；来源为空列表
+        knowledge = make_empty_knowledge(
+            trace={"search_count": 3, "extract_count": 1, "queries": ["a", "b", "c"], "doc_count": 0}
+        )
+        self._enable(monkeypatch, knowledge)
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: ReliabilityAssessment(reliable=True, reason="ok")
+        )
+        chain = FakeChain([sample_quiz_data])
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain)
+
+        assert data.sources == []
+        assert data.agent_trace == AgentTrace(search_count=3, extract_count=1, queries=["a", "b", "c"], doc_count=0)

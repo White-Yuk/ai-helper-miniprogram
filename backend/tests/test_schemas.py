@@ -4,7 +4,14 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from app.models.quiz import Option, Question, QuizGenerateRequest
+from app.models.quiz import (
+    AgentTrace,
+    Option,
+    Question,
+    QuizGenerateData,
+    QuizGenerateRequest,
+    QuizSource,
+)
 from tests.conftest import make_question
 
 
@@ -80,3 +87,45 @@ class TestQuestionModel:
     def test_option_key_normalized_upper(self):
         opt = Option(key="a", text="选项")
         assert opt.key == "A"
+
+
+class TestKnowledgeModels:
+    """知识获取产物模型（任务 6.2）。"""
+
+    def test_quiz_source_requires_title_and_url(self):
+        source = QuizSource(title="标题", url="https://a.example/1")
+        assert source.title == "标题"
+        with pytest.raises(ValidationError):
+            QuizSource(title="", url="https://a.example/1")
+        with pytest.raises(ValidationError):
+            QuizSource(title="标题", url="")
+
+    def test_agent_trace_defaults(self):
+        trace = AgentTrace()
+        assert trace.search_count == 0
+        assert trace.extract_count == 0
+        assert trace.queries == []
+        assert trace.doc_count == 0
+
+    def test_generate_data_optional_fields_default_none(self, sample_quiz_data):
+        data = QuizGenerateData(
+            quiz_id="quiz_x",
+            title=sample_quiz_data.title,
+            summary=sample_quiz_data.summary,
+            questions=sample_quiz_data.questions,
+        )
+        assert data.sources is None
+        assert data.agent_trace is None
+
+    def test_generate_data_with_sources_and_trace(self, sample_quiz_data):
+        data = QuizGenerateData(
+            quiz_id="quiz_x",
+            title=sample_quiz_data.title,
+            summary=sample_quiz_data.summary,
+            questions=sample_quiz_data.questions,
+            sources=[QuizSource(title="t", url="https://a.example/1")],
+            agent_trace=AgentTrace(search_count=2, extract_count=1, queries=["q"], doc_count=5),
+        )
+        assert data.sources[0].title == "t"
+        assert data.agent_trace.search_count == 2
+        assert data.agent_trace.doc_count == 5

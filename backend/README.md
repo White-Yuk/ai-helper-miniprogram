@@ -31,5 +31,29 @@ cp .env.example .env
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET  | `/api/v1/health`          | 健康检查 |
-| POST | `/api/v1/quiz/generate`   | 生成闯关题库（题型/题量/难度可配） |
+| POST | `/api/v1/quiz/generate`   | 生成闯关题库（同步接口；H5 / 调试 / 兼容场景） |
+| POST | `/api/v1/quiz/tasks`      | 创建生成任务，立即返回 task_id（小程序端生成流程） |
+| GET  | `/api/v1/quiz/tasks/{task_id}` | 查询任务状态 / 步骤 / 结果 / 错误 |
 | POST | `/api/v1/report/generate` | 生成复盘报告 |
+
+## 异步生成任务（小程序端生成流程）
+
+背景：微信小程序 `wx.request` 的最大超时时间为 **60 秒（硬性上限，超出会被静默截断为 60s）**，而“联网检索 + 出题”的单次生成耗时无法保证 60s 内完成，因此生成流程采用【异步任务 + 轮询】：
+
+1. `POST /api/v1/quiz/tasks` 创建任务（立即返回 `task_id`，状态 `pending`）；
+2. 客户端定时轮询 `GET /api/v1/quiz/tasks/{task_id}`，实时渲染步骤（搜索 → 找到资料 → 深读 / 提取 → 研判 → 出题）；
+3. 任务终态：`done` 获取题目结果与来源（`sources` / `agent_trace`）；`failed` 按 `error.code` 展示（如 4006 知识盲区，引导补充资料或更换主题）。
+
+任务持久化在数据库 `generation_tasks` 表（建表：`.venv/Scripts/python.exe -c "from app.core.db import init_db; init_db()"`）：服务重启后已存在的任务仍可查询；服务启动时会把残留的 `running` 任务标记为 `failed`，避免客户端无限轮询。
+
+同步接口 `POST /api/v1/quiz/generate` 保留且行为不变（仅供 H5 / 调试 / 兼容场景），小程序端不再调用。
+
+## 知识获取增强（Tavily 联网检索，可选）
+
+1. 获取 Key：https://app.tavily.com → API Keys（`tvly-` 开头；免费额度以官网为准）；
+2. 在 `.env` 填写 `TAVILY_API_KEY=...`（其余调优项均有默认值，见 `.env.example`）；
+3. 重启后端生效。启用后，出题前由 AI Agent 联网检索 / 提取网页内容作为出题依据（超出模型训练数据的新概念也能出对题）；出题结果携带来源（`sources`）与知识溯源（`agent_trace`）。
+
+**回滚**：清空 `TAVILY_API_KEY` 即回到纯模型知识出题，行为与升级前完全一致。
+
+**失败自动降级**：检索网络异常 / 超时 / 限流时不会导致生成失败，系统自动降级为无资料模式继续处理（或按知识盲区守卫输出 4006 引导）。

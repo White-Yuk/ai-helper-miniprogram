@@ -35,6 +35,29 @@ class Settings(BaseSettings):
     # 失败后的重试次数（不含首次调用）；总尝试次数 = llm_max_retries + 1
     llm_max_retries: int = 2
 
+    # ---- 知识获取（Tavily 联网检索；tavily_api_key 为空 = 未启用，行为与升级前一致） ----
+    tavily_api_key: str = ""
+    # Agent 外层超时（线程池 future.result 兜底；超时按“无有效内容”降级）
+    search_agent_timeout_seconds: float = 45.0
+    # 写入 Agent Prompt 的工具调用次数上限
+    search_agent_max_tool_calls: int = 4
+    # 轻快档（basic）搜索工具的结果条数；深度档固定 5 条完整内容（见 knowledge_agent 常量）
+    search_max_results: int = 10
+    # 注入出题 Prompt 的知识摘要截断上限（字符）
+    search_summary_max_chars: int = 5000
+    # 检索结果地域偏向（国家名如 china；空 = 不偏向；仅 general 主题生效）
+    search_country: str = ""
+    # 仅作用于深度档：允许 Tavily 自动配置参数（可能升级 advanced → 约 2 credits/次）
+    search_auto_parameters: bool = True
+
+    # ---- 异步生成任务（异步任务 + 轮询） ----
+    # 知识可靠性评估调用超时
+    assessment_timeout_seconds: float = 20.0
+    # 任务保留时长（创建任务时懒清理超期任务）
+    task_ttl_hours: int = 24
+    # 任务执行线程池并发数
+    task_worker_concurrency: int = 2
+
     # ---- 数据库（MySQL） ----
     # 可选：完整 SQLAlchemy URL（非空时优先使用；一般不需要填）
     database_url: str = ""

@@ -97,8 +97,25 @@
     animation: step-spin 2.4s linear infinite;
   }
 
-  &__label {
+  &__body {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__label {
+    display: block;
+  }
+
+  &__detail {
+    font-size: $fs-xs;
+    color: $muted;
+    font-weight: 600;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -145,5 +162,86 @@
     font-size: $fs-xs;
     color: #b1a897;
     letter-spacing: 1px;
+  }
+}
+
+.trace-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-bottom: 30px;
+
+  &__bubble {
+    max-width: 270px;
+    margin: 14px 0 22px;
+  }
+}
+
+.trace-card {
+  width: 100%;
+  box-sizing: border-box;
+  border: $border-ink-thin;
+  border-radius: 14px;
+  background: $white;
+  box-shadow: 4px 4px 0 $ink;
+  padding: 14px 16px;
+  margin-bottom: 26px;
+  text-align: left;
+
+  &__title {
+    display: block;
+    font-size: $fs-md;
+    font-weight: 900;
+    margin-bottom: 10px;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  &__stat {
+    font-size: $fs-xs;
+    font-weight: 700;
+    background: $green-soft;
+    border: 2px solid $ink;
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin: 0 8px 8px 0;
+  }
+
+  &__queries {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  &__query {
+    font-size: $fs-xs;
+    color: $ink;
+    background: $yellow;
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-weight: 600;
+    margin: 0 6px 6px 0;
+  }
+
+  &__sources {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__source {
+    font-size: $fs-xs;
+    color: $muted;
+    font-weight: 600;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
