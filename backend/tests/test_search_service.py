@@ -88,7 +88,7 @@ class TestAcquireBoundaries:
     def test_disabled_returns_empty_without_build(self, monkeypatch):
         _set_env(monkeypatch, TAVILY_API_KEY="")
         called: list[int] = []
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: called.append(1))
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: called.append(1))
 
         result = acquire_knowledge("什么是 HTTP")
 
@@ -101,7 +101,7 @@ class TestAcquireBoundaries:
 
     def test_agent_timeout_degrades(self, monkeypatch):
         _set_env(monkeypatch, SEARCH_AGENT_TIMEOUT_SECONDS="0.05")
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: FakeAgent(delay=0.3))
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: FakeAgent(delay=0.3))
 
         result = acquire_knowledge("Harness Engineering")
 
@@ -111,7 +111,7 @@ class TestAcquireBoundaries:
     def test_agent_exception_degrades(self, monkeypatch):
         _set_env(monkeypatch)
         monkeypatch.setattr(
-            knowledge_agent, "_build_agent", lambda: FakeAgent(exc=RuntimeError("network down"))
+            knowledge_agent, "_build_agent", lambda include_kb=False: FakeAgent(exc=RuntimeError("network down"))
         )
 
         result = acquire_knowledge("Harness Engineering")
@@ -122,7 +122,7 @@ class TestAcquireBoundaries:
     def test_build_failure_degrades(self, monkeypatch):
         _set_env(monkeypatch)
 
-        def _raise():
+        def _raise(include_kb=False):
             raise ValueError("bad key")
 
         monkeypatch.setattr(knowledge_agent, "_build_agent", _raise)
@@ -146,21 +146,23 @@ class TestAcquireParsing:
             ],
         )
         fake = FakeAgent(result={"messages": messages})
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: fake)
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: fake)
 
         result = acquire_knowledge("Harness Engineering")
 
         assert result.has_valid_content is True
         assert "AI 工程" in result.summary
         assert result.sources == [
-            {"title": "Harness Engineering 导论", "url": "https://a.example/1"},
-            {"title": "短片段", "url": "https://a.example/2"},
+            {"type": "web", "title": "Harness Engineering 导论", "url": "https://a.example/1"},
+            {"type": "web", "title": "短片段", "url": "https://a.example/2"},
         ]
         assert result.trace == {
             "search_count": 1,
             "extract_count": 0,
             "queries": ["Harness Engineering"],
             "doc_count": 2,
+            "library_search_count": 0,
+            "library_hit_count": 0,
         }
 
     def test_summary_truncated_by_config(self, monkeypatch):
@@ -169,7 +171,7 @@ class TestAcquireParsing:
             HumanMessage(content="主题"),
             AIMessage(content="长" * 100),
         ]
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: FakeAgent(result={"messages": messages}))
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: FakeAgent(result={"messages": messages}))
 
         result = acquire_knowledge("主题")
 
@@ -180,7 +182,7 @@ class TestAcquireParsing:
         items = [{"title": f"t{i}", "url": f"https://a.example/{i}", "content": LONG_TEXT} for i in range(12)]
         items.append({"title": "重复", "url": "https://a.example/0", "content": LONG_TEXT})
         monkeypatch.setattr(
-            knowledge_agent, "_build_agent", lambda: FakeAgent(result={"messages": _search_messages("q", items)})
+            knowledge_agent, "_build_agent", lambda include_kb=False: FakeAgent(result={"messages": _search_messages("q", items)})
         )
 
         result = acquire_knowledge("q")
@@ -204,7 +206,7 @@ class TestAcquireParsing:
             ),
             AIMessage(content="未找到相关资料。"),
         ]
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: FakeAgent(result={"messages": messages}))
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: FakeAgent(result={"messages": messages}))
 
         result = acquire_knowledge("冷门主题")
 
@@ -227,12 +229,14 @@ class TestAcquireParsing:
             ToolMessage(content=extract_output, tool_call_id="t2", name="tavily_extract"),
             AIMessage(content="领域判断：网页主题要点。"),
         ]
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: FakeAgent(result={"messages": messages}))
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: FakeAgent(result={"messages": messages}))
 
         result = acquire_knowledge("https://page.example/post")
 
         assert result.has_valid_content is True
-        assert result.sources == [{"title": "https://page.example/post", "url": "https://page.example/post"}]
+        assert result.sources == [
+            {"type": "web", "title": "https://page.example/post", "url": "https://page.example/post"}
+        ]
         assert result.trace["extract_count"] == 1
         assert result.trace["search_count"] == 0
 
@@ -240,7 +244,7 @@ class TestAcquireParsing:
         _set_env(monkeypatch)
         messages = _search_messages("q", [{"title": "t", "url": "https://a.example/1", "content": LONG_TEXT}])
         fake = FakeAgent(result={"messages": messages})
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: fake)
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: fake)
         steps: list = []
 
         acquire_knowledge("q", on_step=lambda *args: steps.append(args))
@@ -254,7 +258,7 @@ class TestAcquireParsing:
     def test_no_on_step_means_no_callbacks(self, monkeypatch):
         _set_env(monkeypatch)
         fake = FakeAgent(result={"messages": []})
-        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda: fake)
+        monkeypatch.setattr(knowledge_agent, "_build_agent", lambda include_kb=False: fake)
 
         acquire_knowledge("q")
 

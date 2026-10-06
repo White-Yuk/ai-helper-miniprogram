@@ -143,10 +143,16 @@ class TestAgentPromptContract:
     def _render(self, max_tool_calls: int = 4) -> str:
         return build_agent_system_prompt(max_tool_calls)
 
-    def test_contains_three_tool_names(self):
+    def test_contains_tool_names(self):
         text = self._render()
-        for name in ["tavily_search_basic", "tavily_search_deep", "tavily_extract"]:
+        for name in ["kb_search", "tavily_search_basic", "tavily_search_deep", "tavily_extract"]:
             assert name in text, f"Agent prompt 缺少工具：{name}"
+
+    def test_contains_library_routing_strategy(self):
+        text = self._render()
+        assert "资料库" in text
+        assert "优先采用" in text  # 资料库命中优先
+        assert "《文档名》" in text  # 来源清单区分资料库与联网
 
     def test_contains_tool_call_limit(self):
         assert "最多 4 次" in self._render(4)

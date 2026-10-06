@@ -50,6 +50,33 @@ class Settings(BaseSettings):
     # 仅作用于深度档：允许 Tavily 自动配置参数（可能升级 advanced → 约 2 credits/次）
     search_auto_parameters: bool = True
 
+    # ---- RAG 资料库（文档上传 → 向量化 → 出题检索增强） ----
+    # 百炼（DashScope）API Key：空 = 资料库未启用（上传入口提示；出题行为与升级前一致）
+    dashscope_api_key: str = ""
+    # 百炼 OpenAI 兼容端点（旧域名可直用；新域名需业务空间 ID，可在此覆盖）
+    dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    embedding_model: str = "text-embedding-v4"
+    # 向量维度（与已建向量库绑定，变更需重建向量库）
+    embedding_dimensions: int = 1024
+    # 单请求条数（对齐百炼官方上限 10；langchain-openai 内部按 chunk_size 分批）
+    embedding_batch_size: int = 10
+    # 数据目录（留空 = backend/data/ 下的 chroma / uploads）
+    chroma_dir: str = ""
+    upload_dir: str = ""
+    # 单文件上传上限（MB）
+    upload_max_size_mb: int = 20
+    # 检索参数：返回片段数 / cosine 距离上限（1 - 余弦相似度）
+    # 阈值实测标定（2026-10-07，scripts/calibrate_kb.py）：相关查询 ≤0.45、无关查询 ≥0.71 → 取 0.58
+    kb_top_k: int = 5
+    kb_similarity_threshold: float = 0.58
+    # 分块参数（字符）：块大小 / 相邻重叠
+    kb_chunk_size: int = 500
+    kb_chunk_overlap: int = 50
+    # 单条命中片段注入 Agent 的截断上限（字符）
+    kb_snippet_max_chars: int = 1200
+    # 文档处理线程池并发数（独立于生成任务线程池）
+    doc_worker_concurrency: int = 1
+
     # ---- 异步生成任务（异步任务 + 轮询） ----
     # 知识可靠性评估调用超时
     assessment_timeout_seconds: float = 20.0

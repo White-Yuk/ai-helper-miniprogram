@@ -1,0 +1,158 @@
+.library-page {
+  box-sizing: border-box;
+  padding: 0 14px 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 顶栏 ---------- */
+.library-top {
+  display: flex;
+  align-items: center;
+  margin: 4px 0 14px;
+
+  &__title {
+    font-size: 20px;
+    font-weight: 900;
+    margin-left: 10px;
+    flex: 1;
+  }
+}
+
+/* ---------- 说明 ---------- */
+.library-intro {
+  border: $border-ink-thin;
+  border-radius: $radius;
+  background-color: $yellow-soft;
+  box-shadow: $shadow-card;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+
+  &__text {
+    font-size: $fs-md;
+    font-weight: 700;
+    line-height: 1.6;
+    color: $ink;
+  }
+}
+
+/* ---------- 文档列表 ---------- */
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.doc-card {
+  border: $border-ink-thin;
+  border-radius: $radius;
+  background-color: $white;
+  box-shadow: $shadow-card;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__name {
+    font-size: $fs-base;
+    font-weight: 900;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__badge {
+    font-size: $fs-xs;
+    font-weight: 800;
+    border: 2px solid $ink;
+    border-radius: $radius-round;
+    padding: 2px 9px;
+    flex-shrink: 0;
+
+    &--doing {
+      background-color: $yellow;
+    }
+
+    &--ok {
+      background-color: $green-soft;
+    }
+
+    &--fail {
+      background-color: $red-soft;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__meta-text {
+    font-size: $fs-sm;
+    color: $muted;
+    font-weight: 600;
+  }
+
+  &__delete {
+    font-size: $fs-sm;
+    font-weight: 800;
+    color: $red;
+    padding: 2px 6px;
+  }
+
+  &__progress {
+    font-size: $fs-sm;
+    color: $muted;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  &__error {
+    font-size: $fs-sm;
+    color: $red;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+}
+
+/* ---------- 加载 / 空态 ---------- */
+.library-status,
+.library-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 36px;
+
+  &__text {
+    font-size: $fs-md;
+    color: $muted;
+    font-weight: 700;
+    margin-top: 14px;
+  }
+
+  &__title {
+    font-size: $fs-lg;
+    font-weight: 900;
+    margin: 14px 0 8px;
+  }
+
+  &__desc {
+    font-size: $fs-md;
+    color: $muted;
+    font-weight: 600;
+    line-height: 1.7;
+    text-align: center;
+    padding: 0 18px;
+  }
+}

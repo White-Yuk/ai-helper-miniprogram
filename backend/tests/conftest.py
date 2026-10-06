@@ -108,6 +108,21 @@ def _isolate_tavily_key(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _isolate_dashscope_key(monkeypatch):
+    """默认清空 DASHSCOPE_API_KEY：防止读到本机 .env 的真实 Key 触发真实调用。
+
+    需要启用资料库的用例自行 patch get_settings / setenv + cache_clear。
+    """
+    monkeypatch.setenv("DASHSCOPE_API_KEY", "")
+
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
 def _skip_startup_housekeeping(monkeypatch):
     """跳过应用启动兜底任务：测试不连接真实数据库（专项单测直接调用服务函数）。"""
     import app.main

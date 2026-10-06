@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from app.core.config import get_settings
 from app.core.exceptions import BizException
@@ -23,8 +24,24 @@ from app.utils.text_cleaner import clean_input
 logger = logging.getLogger(__name__)
 
 
+# 空响应（DeepSeek 服务端偶发返回无 tool_calls 的 200 响应）后的退避基数（秒）：
+# 第 n 次空响应后等待 EMPTY_RESPONSE_BACKOFF_SECONDS * n 秒再重试。
+EMPTY_RESPONSE_BACKOFF_SECONDS = 1.5
+
+
 class QuizValidationError(ValueError):
     """题库结构校验失败（可重试）。"""
+
+
+class EmptyModelResponseError(QuizValidationError):
+    """模型返回空响应：HTTP 成功但无工具调用（DeepSeek 服务端偶发，走加固重试）。"""
+
+
+def _is_empty_response(data) -> bool:
+    """空响应判定：None 或空列表（PydanticToolsParser 无工具调用时的返回形态）。"""
+    if data is None:
+        return True
+    return isinstance(data, (list, tuple)) and len(data) == 0
 
 
 def validate_quiz_quality(data: QuizData, request: QuizGenerateRequest) -> None:
@@ -83,6 +100,7 @@ def generate_quiz(
     request: QuizGenerateRequest,
     chain,
     reference_context: str | None = None,
+    fallback_chain=None,
 ) -> QuizGenerateData:
     """生成题库：调用链 -> 校验 -> 失败重试 -> 兜底异常。
 
@@ -90,6 +108,14 @@ def generate_quiz(
         request: 已通过 Pydantic 校验的请求
         chain: 出题链（LCEL Runnable），invoke 输入为模板变量字典，输出 QuizData
         reference_context: 参考资料（知识获取摘要）；无资料传 None（自动用固定占位提示）
+        fallback_chain: 异构兜底链（json_mode）；连续空响应后切换并逐次退避重试。
+            未提供时行为与升级前一致（空响应按普通失败重试）
+
+    空响应加固（应对 DeepSeek 服务端偶发“HTTP 200 但无 tool_calls”）：
+    - 第 1 次空响应：等待 EMPTY_RESPONSE_BACKOFF_SECONDS 秒后用原链重试（抑或单次抖动）；
+    - 连续第 2 次空响应起：切换 fallback_chain（json_mode 与工具调用走不同服务端
+      管线，规避工具调用路径的持续异常），退避按 EMPTY_RESPONSE_BACKOFF_SECONDS * n 递增；
+    - fallback_chain 未注入（如离线测试）时不做切换与退避，保持原重试行为。
     """
     settings = get_settings()
     inputs = {
@@ -102,10 +128,37 @@ def generate_quiz(
 
     max_attempts = settings.llm_max_retries + 1
     last_error: Exception | None = None
+    empty_response_count = 0
 
     for attempt in range(1, max_attempts + 1):
+        active_chain = chain
+        if empty_response_count and fallback_chain is not None:
+            delay = EMPTY_RESPONSE_BACKOFF_SECONDS * empty_response_count
+            switch = empty_response_count >= 2
+            logger.info(
+                "空响应退避 %.1fs 后重试（%s；第 %s/%s 次尝试）",
+                delay,
+                "已切换异构兜底链（json 模式）" if switch else "原链重试",
+                attempt,
+                max_attempts,
+            )
+            time.sleep(delay)
+            if switch:
+                active_chain = fallback_chain
         try:
-            data = chain.invoke(inputs)
+            data = active_chain.invoke(inputs)
+            if _is_empty_response(data):
+                empty_response_count += 1
+                last_error = EmptyModelResponseError("模型返回空响应（无工具调用）")
+                logger.warning(
+                    "模型空响应（第 %s/%s 次尝试）：%s",
+                    attempt,
+                    max_attempts,
+                    "将退避重试（连续空响应则切换异构兜底链）"
+                    if fallback_chain is not None
+                    else "按普通失败重试",
+                )
+                continue
             if not isinstance(data, QuizData):
                 raise QuizValidationError("模型输出结构无法解析为题库")
             validate_quiz_quality(data, request)
@@ -142,11 +195,13 @@ def generate_quiz_with_grounding(
     request: QuizGenerateRequest,
     chain,
     on_step: StepCallback | None = None,
+    user_id: int | None = None,
+    fallback_chain=None,
 ) -> QuizGenerateData:
     """带知识获取的编排：Agent 获取资料 → 有效内容判定 → （守卫）→ 出题 → 组装产物。
 
     行为矩阵（design D7）：
-    - 未配置 key：与升级前行为完全一致（纯模型知识出题，不产生来源 / 轨迹）；
+    - 未配置任何渠道（联网凭据且资料库均不可用）：与升级前行为完全一致（纯模型知识出题，不产生来源 / 轨迹）；
     - 已配置 + 有有效内容：资料作为 reference_context 注入出题链；携带 sources / agent_trace；
     - 已配置 + 无有效内容：评估知识可靠性——可靠 → 纯模型出题；不可靠 → BizException(4006)；
       评估失败 → 降级为纯模型出题（等价升级前行为）；
@@ -156,13 +211,15 @@ def generate_quiz_with_grounding(
         request: 生成请求
         chain: 出题链（测试 / 路由通过依赖注入替换）
         on_step: 可选步骤回调（阶段步骤：研判 / 出题 / 完成；工具级步骤由 Agent 回调产生）
+        user_id: 当前用户（可选；有就绪文档时 Agent 可检索其资料库）
+        fallback_chain: 异构兜底出题链（json 模式）；空响应后自动切换，见 generate_quiz
     """
     sources: list[QuizSource] | None = None
     agent_trace: AgentTrace | None = None
     reference_context: str | None = None
 
-    if is_enabled():
-        knowledge = acquire_knowledge(clean_input(request.user_input), on_step)
+    if is_enabled(user_id):
+        knowledge = acquire_knowledge(clean_input(request.user_input), on_step, user_id=user_id)
         trace = AgentTrace(**knowledge.trace) if knowledge.trace else AgentTrace()
         has_activity = bool(trace.search_count or trace.extract_count)
 
@@ -191,7 +248,7 @@ def generate_quiz_with_grounding(
             agent_trace = trace if has_activity else None
 
     _emit_step(on_step, "stage:generate", "AI 出题", "正在生成题目", "doing")
-    data = generate_quiz(request, chain, reference_context=reference_context)
+    data = generate_quiz(request, chain, reference_context=reference_context, fallback_chain=fallback_chain)
     _emit_step(on_step, "stage:generate", "AI 出题", "题目生成完成", "done")
     _emit_step(on_step, "stage:finish", "完成", "组卷完成，准备进入闯关", "done")
 

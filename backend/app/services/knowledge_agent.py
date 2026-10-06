@@ -29,12 +29,15 @@ from typing import Any, Callable, List, Literal, Optional
 
 from langchain.agents import create_agent
 from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import tool
 from langchain_tavily import TavilyExtract, TavilySearch
 from langchain_tavily.tavily_search import TavilySearchInput
 
 from app.core.config import get_settings
 from app.llm.langchain_factory import create_chat_model
 from app.prompts.agent_prompt import build_agent_system_prompt
+from app.services.kb_retriever import search_knowledge_base
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +58,7 @@ TOOL_STEP_LABELS = {
     "tavily_search_basic": "联网搜索",
     "tavily_search_deep": "深度检索",
     "tavily_extract": "网页提取",
+    "kb_search": "资料库检索",
 }
 
 # 步骤回调签名：on_step(key, label, detail, state)，state ∈ {doing, done}
@@ -91,15 +95,15 @@ class _DeepSearchInput(TavilySearchInput):
     exclude_domains: Optional[List[str]] = None
 
 
-# ---- Agent 构建（进程级缓存） ----
+# ---- Agent 构建（二态进程级缓存：是否含资料库工具） ----
 
-_agent_cache: Any = None
+_agent_cache: dict[bool, Any] = {}
 
 
 def _reset_agent_cache() -> None:
     """清空 Agent 缓存（测试 / 配置热更新场景使用）。"""
     global _agent_cache
-    _agent_cache = None
+    _agent_cache = {}
 
 
 def _resolve_country() -> Optional[str]:
@@ -164,19 +168,60 @@ def _build_tools(settings) -> list:
     return [search_basic, search_deep, extract]
 
 
-def _build_agent():
-    """构建知识获取 Agent（进程级缓存复用；测试可 patch 本函数）。"""
-    global _agent_cache
+def _build_agent(include_kb: bool = False):
+    """构建知识获取 Agent（按「是否含资料库工具」二态进程级缓存；测试可 patch 本函数）。
+
+    include_kb=True：工具集中加入「资料库检索」工具（仅当用户有就绪文档，
+    由 acquire_knowledge 判断后传入）。
+    """
+    cached = _agent_cache.get(include_kb)
+    if cached is not None:
+        return cached
     settings = get_settings()
-    if _agent_cache is not None:
-        return _agent_cache
+    tools = _build_tools(settings) if settings.tavily_api_key else []
+    if include_kb:
+        tools.append(_build_kb_tool(settings))
     agent = create_agent(
         create_chat_model(),
-        tools=_build_tools(settings),
+        tools=tools,
         system_prompt=build_agent_system_prompt(settings.search_agent_max_tool_calls),
     )
-    _agent_cache = agent
+    _agent_cache[include_kb] = agent
     return agent
+
+
+def _build_kb_tool(settings):
+    """构建「资料库检索」工具（user_id 经运行时 config 注入，严格按用户隔离）。"""
+    snippet_max = settings.kb_snippet_max_chars
+
+    @tool("kb_search")
+    def kb_search(query: str, config: RunnableConfig) -> str:
+        """检索用户本人上传的资料库（个人文档）中与查询相关的片段。
+
+        当主题可能与用户已上传的资料相关、或用户希望基于自己的资料出题时优先使用；
+        若返回“没有相关内容”或结果不相关，请改用联网搜索补充。
+        """
+        user_id = (config.get("configurable") or {}).get("user_id")
+        if not user_id:
+            return "（当前用户暂无可用资料库内容，请使用联网搜索）"
+        try:
+            hits = search_knowledge_base(int(user_id), query)
+        except Exception as exc:  # noqa: BLE001 - 工具层降级为可读字符串，不向上抛
+            logger.warning("资料库检索失败，降级为联网：%s", type(exc).__name__)
+            return "（资料库暂时不可用，请改用联网搜索获取资料）"
+        if not hits:
+            return "（资料库中没有与该查询相关的内容，请使用联网搜索补充）"
+        payload = [
+            {
+                "filename": hit.filename,
+                "content": hit.text[:snippet_max],
+                "score": round(1 - hit.distance, 3),
+            }
+            for hit in hits
+        ]
+        return json.dumps({"results": payload}, ensure_ascii=False)
+
+    return kb_search
 
 
 # ---- 结果解析（工具消息 → 摘要 / 来源 / 溯源） ----
@@ -223,6 +268,8 @@ def _parse_agent_result(result: Any, max_summary_chars: int) -> KnowledgeResult:
     seen_urls: set[str] = set()
     search_count = 0
     extract_count = 0
+    library_search_count = 0
+    library_hit_count = 0
     queries: list[str] = []
     doc_count = 0
     has_valid = False
@@ -241,6 +288,11 @@ def _parse_agent_result(result: Any, max_summary_chars: int) -> KnowledgeResult:
                     queries.append(query.strip())
             elif name == "tavily_extract":
                 extract_count += 1
+            elif name == "kb_search":
+                library_search_count += 1
+                query = args.get("query")
+                if isinstance(query, str) and query.strip():
+                    queries.append(query.strip())
 
         # 工具执行结果（ToolMessage）
         if msg_type == "tool":
@@ -250,6 +302,27 @@ def _parse_agent_result(result: Any, max_summary_chars: int) -> KnowledgeResult:
             results = parsed.get("results") or []
             if not isinstance(results, list):
                 continue
+
+            # 资料库检索结果：{filename, content, score}
+            if getattr(msg, "name", "") == "kb_search":
+                doc_count += len(results)
+                library_hit_count += len(results)
+                for item in results:
+                    if not isinstance(item, dict):
+                        continue
+                    filename = item.get("filename")
+                    if not filename:
+                        continue
+                    dedup_key = f"library:{filename}"
+                    if dedup_key not in seen_urls:
+                        seen_urls.add(dedup_key)
+                        sources.append({"type": "library", "title": str(filename)})
+                    content_text = item.get("content") or ""
+                    if isinstance(content_text, str) and len(content_text) >= MIN_VALID_CONTENT_CHARS:
+                        has_valid = True
+                continue
+
+            # 联网检索结果（tavily_*）：{url, title, content/raw_content}
             doc_count += len(results)
             for item in results:
                 if not isinstance(item, dict):
@@ -260,7 +333,7 @@ def _parse_agent_result(result: Any, max_summary_chars: int) -> KnowledgeResult:
                 title = item.get("title") or url
                 if url not in seen_urls:
                     seen_urls.add(url)
-                    sources.append({"title": str(title), "url": str(url)})
+                    sources.append({"type": "web", "title": str(title), "url": str(url)})
                 content_text = item.get("content") or item.get("raw_content") or ""
                 if isinstance(content_text, str) and len(content_text) >= MIN_VALID_CONTENT_CHARS:
                     has_valid = True
@@ -277,6 +350,8 @@ def _parse_agent_result(result: Any, max_summary_chars: int) -> KnowledgeResult:
         "extract_count": extract_count,
         "queries": queries,
         "doc_count": doc_count,
+        "library_search_count": library_search_count,
+        "library_hit_count": library_hit_count,
     }
     return KnowledgeResult(
         summary=summary,
@@ -365,30 +440,66 @@ class _StepCallback(BaseCallbackHandler):
 # ---- 对外入口 ----
 
 
-def is_enabled() -> bool:
-    """知识获取是否启用（凭据已配置）。"""
-    return bool(get_settings().tavily_api_key)
+def is_enabled(user_id: int | None = None) -> bool:
+    """知识获取是否启用：联网凭据已配置，或（百炼已配置且该用户有就绪文档）。"""
+    settings = get_settings()
+    if settings.tavily_api_key:
+        return True
+    return (
+        bool(settings.dashscope_api_key)
+        and user_id is not None
+        and _user_has_ready_documents(int(user_id))
+    )
+
+
+def _user_has_ready_documents(user_id: int) -> bool:
+    """用户是否有处理就绪的文档（资料库工具注入判断；查询失败按无资料库降级）。"""
+    try:
+        from app.services.doc_service import has_ready_documents
+
+        return has_ready_documents(user_id)
+    except Exception:  # noqa: BLE001 - 查询失败保守降级
+        logger.warning("查询用户文档状态失败，按无资料库处理", exc_info=True)
+        return False
 
 
 def _empty_result() -> KnowledgeResult:
     return KnowledgeResult(
-        trace={"search_count": 0, "extract_count": 0, "queries": [], "doc_count": 0}
+        trace={
+            "search_count": 0,
+            "extract_count": 0,
+            "queries": [],
+            "doc_count": 0,
+            "library_search_count": 0,
+            "library_hit_count": 0,
+        }
     )
 
 
-def acquire_knowledge(user_input: str, on_step: Optional[StepCallback] = None) -> KnowledgeResult:
-    """执行知识获取。任何失败（构建 / 超时 / 异常）都降级返回"无有效内容"，不抛异常。
+def acquire_knowledge(
+    user_input: str,
+    on_step: Optional[StepCallback] = None,
+    user_id: Optional[int] = None,
+) -> KnowledgeResult:
+    """执行知识获取。任何失败（构建 / 超时 / 异常）都降级返回“无有效内容”，不抛异常。
 
     Args:
         user_input: 用户的学习内容（可能包含网址）
         on_step: 可选步骤回调（工具级事件实时上报）
+        user_id: 当前用户（有就绪文档时注入资料库检索工具；None = 不带资料库）
     """
     settings = get_settings()
-    if not settings.tavily_api_key:
-        return _empty_result()  # 未配置 = 未启用（调用方走兼容模式）
+    tavily_enabled = bool(settings.tavily_api_key)
+    kb_enabled = (
+        bool(settings.dashscope_api_key)
+        and user_id is not None
+        and _user_has_ready_documents(int(user_id))
+    )
+    if not tavily_enabled and not kb_enabled:
+        return _empty_result()  # 无可用渠道（联网未配置且无资料库），调用方走兼容模式
 
     try:
-        agent = _build_agent()
+        agent = _build_agent(include_kb=kb_enabled)
     except Exception as exc:  # noqa: BLE001 - 构建失败一律降级
         logger.warning("知识获取 Agent 构建失败，按无资料降级：%s", exc)
         return _empty_result()
@@ -398,7 +509,11 @@ def acquire_knowledge(user_input: str, on_step: Optional[StepCallback] = None) -
     def _run():
         return agent.invoke(
             {"messages": [{"role": "user", "content": user_input}]},
-            config={"callbacks": callbacks, "recursion_limit": AGENT_RECURSION_LIMIT},
+            config={
+                "callbacks": callbacks,
+                "recursion_limit": AGENT_RECURSION_LIMIT,
+                "configurable": {"user_id": user_id},
+            },
         )
 
     executor = ThreadPoolExecutor(max_workers=1)

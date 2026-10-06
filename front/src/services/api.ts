@@ -2,6 +2,8 @@ import Taro from '@tarojs/taro'
 
 import type {
   ApiResponse,
+  DocumentCreated,
+  DocumentListData,
   KnowledgeDetailData,
   LoginData,
   MeData,
@@ -44,7 +46,7 @@ export class ApiError extends Error {
 
 interface RequestOptions {
   url: string
-  method?: 'GET' | 'POST' | 'PUT'
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   data?: unknown
   /** 允许 data 为 null（如“无未完成闯关”是合法空态） */
   allowNull?: boolean
@@ -335,4 +337,103 @@ export function resolveAssetUrl(path: string): string {
   if (!path) return ''
   if (/^https?:\/\//.test(path)) return path
   return `${API_BASE_URL}${path}`
+}
+
+/* ---------------- RAG 资料库（文档上传与检索增强） ---------------- */
+
+/** 我的文档列表（含处理状态与步骤，供轮询） */
+export function listDocuments() {
+  return request<DocumentListData>({ url: '/api/v1/documents' })
+}
+
+/** 删除文档（记录 + 向量 + 原文件） */
+export function deleteDocument(docId: string) {
+  return request<{ doc_id: string; deleted: boolean }>({
+    url: `/api/v1/documents/${docId}`,
+    method: 'DELETE',
+  })
+}
+
+/**
+ * 上传文档（multipart）。受理即返回（后台异步处理），状态由列表轮询跟进。
+ * - 微信端：传 filePath（Taro.chooseMessageFile 的临时路径）
+ * - H5 端：传 file（浏览器 File 对象，走原生 fetch + FormData）
+ */
+export async function uploadDocument(params: {
+  filePath?: string
+  file?: File
+  filename?: string
+}): Promise<DocumentCreated> {
+  if (process.env.TARO_ENV === 'h5') {
+    if (!params.file) throw new ApiError(-1, '未选择文件')
+    return uploadDocumentH5(params.file)
+  }
+  if (!params.filePath) throw new ApiError(-1, '未选择文件')
+  return uploadDocumentTaro(params.filePath)
+}
+
+/** 微信端上传：Taro.uploadFile（60s 上限内，≤20MB 本地/局域网安全） */
+async function uploadDocumentTaro(filePath: string): Promise<DocumentCreated> {
+  const header: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    header.Authorization = `Bearer ${token}`
+  }
+
+  let response: Awaited<ReturnType<typeof Taro.uploadFile>>
+  try {
+    response = await Taro.uploadFile({
+      url: `${API_BASE_URL}/api/v1/documents`,
+      filePath,
+      name: 'file',
+      header,
+      timeout: 60000,
+    })
+  } catch {
+    throw new ApiError(-1, '文件上传失败，请检查网络后重试')
+  }
+
+  let body: ApiResponse<DocumentCreated> | null = null
+  try {
+    body = JSON.parse(response.data) as ApiResponse<DocumentCreated>
+  } catch {
+    body = null
+  }
+  if (!body || body.code !== 0 || !body.data) {
+    throw new ApiError(body?.code ?? -1, body?.message ?? '文件上传失败，请重试')
+  }
+  return body.data
+}
+
+/** H5 端上传：原生 fetch + FormData（浏览器直接选择本地文件） */
+async function uploadDocumentH5(file: File): Promise<DocumentCreated> {
+  const form = new FormData()
+  form.append('file', file, file.name)
+  const headers: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/documents`, {
+      method: 'POST',
+      headers,
+      body: form,
+    })
+  } catch {
+    throw new ApiError(-1, '文件上传失败，请检查网络后重试')
+  }
+
+  let body: ApiResponse<DocumentCreated> | null = null
+  try {
+    body = (await response.json()) as ApiResponse<DocumentCreated>
+  } catch {
+    body = null
+  }
+  if (!body || body.code !== 0 || !body.data) {
+    throw new ApiError(body?.code ?? -1, body?.message ?? '文件上传失败，请重试')
+  }
+  return body.data
 }

@@ -145,14 +145,17 @@ export default function QuestionPanel({
           {fillInputs.map((value, index) => (
             <View key={index} className='fill-card__row'>
               {fillInputs.length > 1 && <Text className='fill-card__index'>第 {index + 1} 空</Text>}
-              <Input
-                className='fill-card__input'
-                value={value}
-                disabled={phase === 'feedback'}
-                placeholder='填写答案…'
-                placeholderClass='fill-card__placeholder'
-                onInput={(event) => onFillInput(index, event.detail.value)}
-              />
+              <View className='fill-card__input-box'>
+                <Input
+                  className='fill-card__input'
+                  value={value}
+                  disabled={phase === 'feedback'}
+                  alwaysEmbed
+                  placeholder='填写答案…'
+                  placeholderClass='fill-card__placeholder'
+                  onInput={(event) => onFillInput(index, event.detail.value)}
+                />
+              </View>
             </View>
           ))}
         </View>

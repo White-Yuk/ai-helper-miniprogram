@@ -22,14 +22,22 @@ def get_quiz_chain():
     return build_quiz_chain()
 
 
+def get_quiz_fallback_chain():
+    """依赖注入：异构兜底出题链（json 模式；连续空响应后由出题服务自动切换）。"""
+    return build_quiz_chain(structured_method="json_mode")
+
+
 @router.post("/quiz/generate", summary="生成闯关题库（同步；H5 / 调试用，小程序端请用任务接口）")
 def generate_quiz_route(
     payload: QuizGenerateRequest,
     chain=Depends(get_quiz_chain),
+    fallback_chain=Depends(get_quiz_fallback_chain),
     user: User | None = Depends(get_optional_current_user),
     session: Session = Depends(get_db),
 ) -> dict:
-    data = generate_quiz_with_grounding(payload, chain)
+    data = generate_quiz_with_grounding(
+        payload, chain, fallback_chain=fallback_chain, user_id=user.id if user is not None else None
+    )
     if user is not None:
         record_service.save_generated_quiz(session, user.id, data)
     return success(data)

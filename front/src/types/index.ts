@@ -40,18 +40,21 @@ export interface QuizData {
   agent_trace?: AgentTrace | null
 }
 
-/** 知识来源条目 */
+/** 知识来源条目（web=联网检索；library=资料库文档；type 缺省按 web 兼容旧数据） */
 export interface QuizSource {
+  type?: 'web' | 'library'
   title: string
-  url: string
+  url?: string | null
 }
 
-/** 知识获取轨迹摘要（知识溯源） */
+/** 知识获取轨迹摘要（知识溯源；library 字段缺省兼容旧数据） */
 export interface AgentTrace {
   search_count: number
   extract_count: number
   queries: string[]
   doc_count: number
+  library_search_count?: number
+  library_hit_count?: number
 }
 
 export interface AnswerRecord {
@@ -286,4 +289,34 @@ export interface QuizTaskData {
   steps: TaskStep[]
   result: QuizData | null
   error: { code: number; message: string } | null
+}
+
+/* ---------------- RAG 资料库（文档上传与检索增强） ---------------- */
+
+export type DocStatus = 'pending' | 'processing' | 'ready' | 'failed'
+
+/** 文档记录（GET /documents 列表项；含处理步骤供轮询展示） */
+export interface DocItem {
+  doc_id: string
+  filename: string
+  file_type: 'pdf' | 'docx' | 'md'
+  file_size: number
+  status: DocStatus
+  steps: TaskStep[]
+  error_message: string | null
+  chunk_count: number | null
+  char_count: number | null
+  created_at: string | null
+  finished_at: string | null
+}
+
+/** GET /documents 响应 */
+export interface DocumentListData {
+  documents: DocItem[]
+}
+
+/** POST /documents 响应（受理即返回） */
+export interface DocumentCreated {
+  doc_id: string
+  status: DocStatus
 }

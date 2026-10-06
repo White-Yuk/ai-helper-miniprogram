@@ -11,6 +11,7 @@ export default defineAppConfig({
     'pages/stats/index',
     'pages/wrongbook/index',
     'pages/redo/index',
+    'pages/library/index',
     'pages/poster/index'
   ],
   window: {

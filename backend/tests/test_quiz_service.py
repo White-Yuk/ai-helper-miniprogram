@@ -10,6 +10,7 @@ from app.prompts.quiz_prompt import NO_REFERENCE_CONTEXT
 from app.services import quiz_service
 from app.services.knowledge_agent import KnowledgeResult
 from app.services.quiz_service import (
+    EMPTY_RESPONSE_BACKOFF_SECONDS,
     QuizValidationError,
     generate_quiz,
     validate_quiz_quality,
@@ -167,6 +168,78 @@ class TestGenerateQuiz:
         assert chain.call_count == settings.llm_max_retries + 1
 
 
+# ---- 空响应加固（DeepSeek 服务端偶发“HTTP 200 但无 tool_calls”）----
+
+
+class TestEmptyResponseFallback:
+    """空响应加固：第 1 次退避后原链重试；连续第 2 次起切换异构兜底链（json 模式）。
+
+    剧本按当前 llm_max_retries=2（共 3 次尝试）设计。
+    """
+
+    def test_single_empty_response_retries_main_chain(self, sample_quiz_data: QuizData, monkeypatch):
+        slept: list[float] = []
+        monkeypatch.setattr(quiz_service.time, "sleep", lambda seconds: slept.append(seconds))
+        chain = FakeChain([None, sample_quiz_data])  # 第 1 次空响应，第 2 次成功
+        fallback = FakeChain([sample_quiz_data])
+
+        result = generate_quiz(make_request(), chain, fallback_chain=fallback)
+
+        assert len(result.questions) == 4
+        assert chain.call_count == 2  # 单次抖动：原链退避重试即成功
+        assert fallback.call_count == 0  # 未触发异构切换
+        assert slept == [EMPTY_RESPONSE_BACKOFF_SECONDS]
+
+    def test_consecutive_empty_response_switches_to_fallback(self, sample_quiz_data: QuizData, monkeypatch):
+        slept: list[float] = []
+        monkeypatch.setattr(quiz_service.time, "sleep", lambda seconds: slept.append(seconds))
+        chain = FakeChain([None])  # 主链持续空响应
+        fallback = FakeChain([sample_quiz_data])
+
+        result = generate_quiz(make_request(), chain, fallback_chain=fallback)
+
+        assert len(result.questions) == 4
+        assert chain.call_count == 2  # 第 1、2 次尝试均为原链
+        assert fallback.call_count == 1  # 连续第 2 次空响应后切换到兜底链
+        assert slept == [EMPTY_RESPONSE_BACKOFF_SECONDS, EMPTY_RESPONSE_BACKOFF_SECONDS * 2]
+
+    def test_empty_response_without_fallback_keeps_legacy_retry(self, sample_quiz_data: QuizData, monkeypatch):
+        slept: list[float] = []
+        monkeypatch.setattr(quiz_service.time, "sleep", lambda seconds: slept.append(seconds))
+        chain = FakeChain([None, sample_quiz_data])  # 未注入兜底链：空响应按普通失败重试
+
+        result = generate_quiz(make_request(), chain)
+
+        assert len(result.questions) == 4
+        assert chain.call_count == 2
+        assert slept == []  # 不触发退避
+
+    def test_all_empty_response_exhausts_and_raises(self, monkeypatch):
+        slept: list[float] = []
+        monkeypatch.setattr(quiz_service.time, "sleep", lambda seconds: slept.append(seconds))
+        chain = FakeChain([None])
+        fallback = FakeChain([None])
+
+        with pytest.raises(BizException) as exc_info:
+            generate_quiz(make_request(), chain, fallback_chain=fallback)
+
+        assert exc_info.value.code == 4001
+        assert chain.call_count == 2
+        assert fallback.call_count == 1  # 最后一次尝试为兜底链
+        assert slept == [EMPTY_RESPONSE_BACKOFF_SECONDS, EMPTY_RESPONSE_BACKOFF_SECONDS * 2]
+
+    def test_grounding_flow_forwards_fallback_chain(self, sample_quiz_data: QuizData, monkeypatch):
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda user_id=None: False)
+        monkeypatch.setattr(quiz_service.time, "sleep", lambda seconds: None)
+        chain = FakeChain([None])
+        fallback = FakeChain([sample_quiz_data])
+
+        data = quiz_service.generate_quiz_with_grounding(make_request(), chain, fallback_chain=fallback)
+
+        assert len(data.questions) == 4
+        assert fallback.call_count == 1
+
+
 # ---- 带知识获取的编排（任务 6.1）：Agent / 评估器 / 步骤回调注入 ----
 
 
@@ -196,11 +269,11 @@ class TestGenerateQuizWithGrounding:
     """行为矩阵（design D7）：未配置 / 有内容 / 无内容（可靠 / 不可靠）/ 降级 / URL。"""
 
     def _enable(self, monkeypatch, knowledge: KnowledgeResult) -> None:
-        monkeypatch.setattr(quiz_service, "is_enabled", lambda: True)
-        monkeypatch.setattr(quiz_service, "acquire_knowledge", lambda text, on_step=None: knowledge)
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda user_id=None: True)
+        monkeypatch.setattr(quiz_service, "acquire_knowledge", lambda text, on_step=None, user_id=None: knowledge)
 
     def test_disabled_passthrough_without_agent(self, sample_quiz_data, monkeypatch):
-        monkeypatch.setattr(quiz_service, "is_enabled", lambda: False)
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda user_id=None: False)
         called: list = []
         monkeypatch.setattr(
             quiz_service, "acquire_knowledge", lambda *a, **k: called.append(1) or make_empty_knowledge()
@@ -223,12 +296,13 @@ class TestGenerateQuizWithGrounding:
         knowledge = make_knowledge()
         captured: dict = {}
 
-        def fake_acquire(text, on_step=None):
+        def fake_acquire(text, on_step=None, user_id=None):
             captured["text"] = text
             captured["on_step"] = on_step
+            captured["user_id"] = user_id
             return knowledge
 
-        monkeypatch.setattr(quiz_service, "is_enabled", lambda: True)
+        monkeypatch.setattr(quiz_service, "is_enabled", lambda user_id=None: True)
         monkeypatch.setattr(quiz_service, "acquire_knowledge", fake_acquire)
         monkeypatch.setattr(
             quiz_service, "assess_reliability", lambda _t: (_ for _ in ()).throw(AssertionError("有资料不应评估"))
@@ -244,6 +318,30 @@ class TestGenerateQuizWithGrounding:
         assert captured["text"] == "什么是 RAG？"
         assert callable(captured["on_step"])  # 步骤回穿透传给 Agent（工具级步骤）
         assert [s[0] for s in steps] == ["stage:judge", "stage:generate", "stage:generate", "stage:finish"]
+
+    def test_user_id_passed_to_is_enabled_and_acquire(self, sample_quiz_data, monkeypatch):
+        """user_id 透传：is_enabled 与 acquire_knowledge 都能收到（资料库隔离依赖）。"""
+        captured: dict = {}
+
+        def fake_is_enabled(user_id=None):
+            captured["is_enabled_user_id"] = user_id
+            return True
+
+        def fake_acquire(text, on_step=None, user_id=None):
+            captured["acquire_user_id"] = user_id
+            return make_knowledge()
+
+        monkeypatch.setattr(quiz_service, "is_enabled", fake_is_enabled)
+        monkeypatch.setattr(quiz_service, "acquire_knowledge", fake_acquire)
+        monkeypatch.setattr(
+            quiz_service, "assess_reliability", lambda _t: (_ for _ in ()).throw(AssertionError("有资料不应评估"))
+        )
+        chain = FakeChain([sample_quiz_data])
+
+        quiz_service.generate_quiz_with_grounding(make_request(), chain, user_id=42)
+
+        assert captured["is_enabled_user_id"] == 42
+        assert captured["acquire_user_id"] == 42
 
     def test_no_content_reliable_generates_pure(self, sample_quiz_data, monkeypatch):
         self._enable(monkeypatch, make_empty_knowledge())

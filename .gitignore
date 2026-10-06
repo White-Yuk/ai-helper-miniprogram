@@ -25,6 +25,9 @@ logs/
 backend/static/avatars/
 backend/static/uploads/
 
+# ===== RAG 资料库数据（向量库 / 上传文档，不入库） =====
+backend/data/
+
 # ===== 编辑器 / 系统 =====
 .idea/
 .vscode/
@@ -33,3 +36,6 @@ Thumbs.db
 
 # ===== 微信开发者工具本地私有配置 =====
 front/project.private.config.json
+
+# ===== 含密钥的本地参考文档（严禁提交） =====
+doc/RAG技术选型.md

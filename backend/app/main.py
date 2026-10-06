@@ -19,7 +19,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import BizException
 from app.core.response import error
-from app.services import task_service
+from app.services import doc_service, task_service
 from app.utils import files
 
 logging.basicConfig(
@@ -31,9 +31,10 @@ logging.basicConfig(
 def _startup_housekeeping() -> None:
     """应用启动兜底（测试可通过 patch 本函数跳过）。
 
-    进程中断后残留的 pending / running 生成任务标记为 failed，避免客户端无限轮询。
+    进程中断后残留的 pending / running 生成任务与处理中文档标记为 failed，避免客户端无限轮询。
     """
     task_service.mark_stale_tasks_failed()
+    doc_service.mark_stale_documents_failed()
 
 
 @asynccontextmanager

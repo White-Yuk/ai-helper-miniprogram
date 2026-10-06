@@ -97,7 +97,13 @@ def _execute_generation(
     from app.llm.quiz_chain import build_quiz_chain
     from app.services.quiz_service import generate_quiz_with_grounding
 
-    return generate_quiz_with_grounding(request, build_quiz_chain(), on_step=on_step)
+    return generate_quiz_with_grounding(
+        request,
+        build_quiz_chain(),
+        on_step=on_step,
+        user_id=user_id,
+        fallback_chain=build_quiz_chain(structured_method="json_mode"),
+    )
 
 
 def _save_user_record(user_id: int, data: QuizGenerateData) -> None:

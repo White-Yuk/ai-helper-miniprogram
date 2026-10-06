@@ -83,10 +83,15 @@ class QuizData(BaseModel):
 
 
 class QuizSource(BaseModel):
-    """知识来源条目：检索 / 提取结果中的标题与链接（来自真实工具结果）。"""
+    """知识来源条目：联网检索 / 提取结果或资料库文档（来自真实工具结果）。
 
+    - type = "web"（默认，向后兼容旧任务数据）或 "library"；
+    - url：联网来源必填（构建侧保证），资料库来源为 None（无链接）。
+    """
+
+    type: Literal["web", "library"] = "web"
     title: str = Field(min_length=1)
-    url: str = Field(min_length=1)
+    url: str | None = None
 
 
 class AgentTrace(BaseModel):
@@ -96,6 +101,9 @@ class AgentTrace(BaseModel):
     extract_count: int = 0
     queries: list[str] = Field(default_factory=list)
     doc_count: int = 0
+    # 资料库检索统计（0 = 未使用资料库）
+    library_search_count: int = 0
+    library_hit_count: int = 0
 
 
 class QuizGenerateData(BaseModel):

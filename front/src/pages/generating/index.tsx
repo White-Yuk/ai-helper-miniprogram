@@ -148,6 +148,9 @@ export default function Generating() {
               <View className='trace-card__stats'>
                 <Text className='trace-card__stat'>联网检索 {quizData.agent_trace.search_count} 次</Text>
                 <Text className='trace-card__stat'>深读 / 提取 {quizData.agent_trace.extract_count} 次</Text>
+                {quizData.agent_trace.library_search_count ? (
+                  <Text className='trace-card__stat'>资料库检索 {quizData.agent_trace.library_search_count} 次</Text>
+                ) : null}
                 <Text className='trace-card__stat'>资料 {quizData.agent_trace.doc_count} 条</Text>
               </View>
             ) : null}
@@ -162,9 +165,10 @@ export default function Generating() {
             ) : null}
             {quizData.sources && quizData.sources.length > 0 ? (
               <View className='trace-card__sources'>
-                {quizData.sources.slice(0, 3).map((source) => (
-                  <Text key={source.url} className='trace-card__source'>
-                    · {source.title}
+                {quizData.sources.slice(0, 3).map((source, index) => (
+                  <Text key={`${source.type ?? 'web'}-${source.title}-${index}`} className='trace-card__source'>
+                    {source.type === 'library' ? '📄 ' : '🔗 '}
+                    {source.title}
                   </Text>
                 ))}
               </View>

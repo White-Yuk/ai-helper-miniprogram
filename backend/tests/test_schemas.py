@@ -92,13 +92,22 @@ class TestQuestionModel:
 class TestKnowledgeModels:
     """知识获取产物模型（任务 6.2）。"""
 
-    def test_quiz_source_requires_title_and_url(self):
+    def test_quiz_source_web_requires_title(self):
         source = QuizSource(title="标题", url="https://a.example/1")
         assert source.title == "标题"
+        assert source.type == "web"  # 默认（向后兼容旧数据）
         with pytest.raises(ValidationError):
             QuizSource(title="", url="https://a.example/1")
-        with pytest.raises(ValidationError):
-            QuizSource(title="标题", url="")
+
+    def test_quiz_source_library_without_url(self):
+        source = QuizSource(type="library", title="我的讲义.pdf")
+        assert source.url is None
+        assert source.type == "library"
+
+    def test_quiz_source_legacy_payload_defaults_web(self):
+        """旧任务结果（无 type 字段）反序列化 → 默认按 web 处理。"""
+        source = QuizSource.model_validate({"title": "t", "url": "https://a.example/1"})
+        assert source.type == "web"
 
     def test_agent_trace_defaults(self):
         trace = AgentTrace()
@@ -106,6 +115,8 @@ class TestKnowledgeModels:
         assert trace.extract_count == 0
         assert trace.queries == []
         assert trace.doc_count == 0
+        assert trace.library_search_count == 0
+        assert trace.library_hit_count == 0
 
     def test_generate_data_optional_fields_default_none(self, sample_quiz_data):
         data = QuizGenerateData(

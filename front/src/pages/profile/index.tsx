@@ -10,15 +10,14 @@ import { useUserStore } from '../../store/userStore'
 import './index.scss'
 
 const TOOLBOX = [
-  { key: 'library', icon: '📚', label: '知识库' },
+  { key: 'library', icon: '📚', label: '资料库' },
   { key: 'wrongbook', icon: '📕', label: '错题本' },
   { key: 'stats', icon: '📊', label: '学习汇报' },
   { key: 'settings', icon: '⚙️', label: '设置' },
 ] as const
 
-/** 尚未开放的入口（阶段 4 接入） */
+/** 尚未开放的入口 */
 const TOOLBOX_LAUNCHING: Partial<Record<(typeof TOOLBOX)[number]['key'], string>> = {
-  library: '知识库即将上线',
   settings: '设置即将上线',
 }
 
@@ -43,6 +42,10 @@ export default function Profile() {
   const avatarSrc = me?.avatar ? resolveAssetUrl(me.avatar) : ''
 
   const handleToolClick = (key: (typeof TOOLBOX)[number]['key']) => {
+    if (key === 'library') {
+      Taro.navigateTo({ url: '/pages/library/index' })
+      return
+    }
     if (key === 'wrongbook') {
       Taro.navigateTo({ url: '/pages/wrongbook/index' })
       return
