@@ -93,3 +93,7 @@ cp .env.example .env
 ```
 
 **检索阈值**：`kb_similarity_threshold` 默认 0.58（cosine 距离上限），2026-10-07 实测标定：相关查询 ≤0.45、无关查询 ≥0.71；文档类型扩充后可复跑 `calibrate_kb.py` 复测。
+
+## CI（持续集成）
+
+推送 / 提交 PR 时，GitHub Actions 会自动安装依赖并运行全部测试（LLM 全部 Mock，不消耗 API 额度），也可在 Actions 页手动触发。配置见 `.github/workflows/tests.yml`。
