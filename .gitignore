@@ -39,3 +39,6 @@ front/project.private.config.json
 
 # ===== 含密钥的本地参考文档（严禁提交） =====
 doc/RAG技术选型.md
+
+# ===== 求职材料（个人隐私，严禁提交） =====
+resume_work/

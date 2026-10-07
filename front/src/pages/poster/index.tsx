@@ -61,7 +61,7 @@ export default function Poster() {
         <Text className='poster__sfx'>BOOM!</Text>
 
         <View className='poster__brand'>
-          <Text>🤖 AI 闯关学习 · 学习战报</Text>
+          <Text>🤖 AI学习助手 · 学习战报</Text>
         </View>
 
         <Mascot variant='happy' size={100} className='poster__mascot' />

@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     # ---- 服务基础 ----
-    app_name: str = "AI 闯关学习"
+    app_name: str = "AI学习助手"
     app_env: str = "development"
     debug: bool = True
     version: str = "0.1.0"

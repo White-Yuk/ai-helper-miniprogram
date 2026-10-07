@@ -19,7 +19,7 @@ export default defineAppConfig({
     navigationStyle: 'custom',
     backgroundColor: '#FFF6E3',
     navigationBarBackgroundColor: '#FFF6E3',
-    navigationBarTitleText: 'AI 闯关学习',
+    navigationBarTitleText: 'AI学习助手',
     navigationBarTextStyle: 'black'
   }
 })

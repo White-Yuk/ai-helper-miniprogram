@@ -124,7 +124,7 @@ export default function Index() {
       <View className='home-top' style={{ paddingRight: getCapsuleInset() }}>
         <View className='logo-sticker'>
           <Text className='logo-sticker__ai'>AI</Text>
-          <Text className='logo-sticker__text'>闯关学习</Text>
+          <Text className='logo-sticker__text'>学习助手</Text>
         </View>
         <View className='avatar-dot' hoverClass='avatar-dot--active' onClick={handleAvatar}>
           {me?.avatar ? (

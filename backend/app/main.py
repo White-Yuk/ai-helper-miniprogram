@@ -48,7 +48,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.version,
-        description="AI 闯关学习小程序后端：题库生成 / 复盘报告生成",
+        description="AI学习助手后端：题库生成 / 复盘报告生成",
         lifespan=_lifespan,
     )
 

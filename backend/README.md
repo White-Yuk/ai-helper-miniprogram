@@ -1,4 +1,4 @@
-# Backend · AI 闯关学习
+# Backend · AI学习助手
 
 FastAPI + LangChain + DeepSeek 后端服务（MVP）。
 
